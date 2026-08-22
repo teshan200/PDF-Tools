@@ -1,23 +1,26 @@
 # PDF Tools
 
-A free, full-stack PDF utility web application with 8 essential tools — built with React 19, Vite, Tailwind CSS v4, and Netlify Serverless Functions.
+A fast, modern, and free full-stack PDF utility web application with **9 essential tools** — built with React 19, Vite, Tailwind CSS v4, PDF.js, pdf-lib, and Netlify Serverless Functions.
+
+Live App: [https://pdftools.teshan.click/](https://pdftools.teshan.click/)
 
 Developed by **Teshan Pamodya** • [Website](https://teshan.click) • [GitHub](https://github.com/teshan200/)
 
 ---
 
-## ✨ Features
+## ✨ Features & Tools
 
 | Tool | Description |
 |---|---|
-| **Merge PDF** | Combine multiple PDFs into one document with custom ordering. |
-| **Split PDF** | Split by page ranges, every N pages, or into individual pages. |
-| **Compress PDF** | Reduce file size with Low, Recommended, or Extreme compression. |
-| **PDF to Word** | Convert PDF documents to editable `.docx` Word files. |
-| **PDF to JPG** | Convert PDF pages into high-quality JPG images (packaged in ZIP). |
-| **Rotate PDF** | Rotate pages 90°, 180°, or 270° (all, even, or odd pages). |
-| **Protect PDF** | Encrypt PDFs with 128-bit or 256-bit AES password protection. |
-| **Unlock PDF** | Remove password restrictions from protected PDF files. |
+| ✏️ **Edit PDF** | Click any original text in the PDF to edit/replace paragraphs in place, whiteout unwanted content, insert images & digital signatures, and draw freehand notes. |
+| 🔀 **Merge PDF** | Combine multiple PDF files into a single document with custom ordering. |
+| ✂️ **Split PDF** | Extract page ranges, split by intervals (every N pages), or split into individual pages. |
+| 🗜️ **Compress PDF** | Reduce PDF file size with Extreme, Recommended, or Low compression levels. |
+| 📝 **PDF to Word** | Convert PDF documents into editable Microsoft Word (`.docx`) files. |
+| 🖼️ **PDF to JPG** | Convert PDF pages into high-resolution JPG images packaged in a ZIP archive. |
+| 🔄 **Rotate PDF** | Rotate pages 90°, 180°, or 270° with filters for all, even, or odd pages. |
+| 🔒 **Protect PDF** | Encrypt and lock PDF files with AES password protection. |
+| 🔓 **Unlock PDF** | Remove password restrictions and security locks from protected PDF files. |
 
 ---
 
@@ -25,9 +28,10 @@ Developed by **Teshan Pamodya** • [Website](https://teshan.click) • [GitHub]
 
 - **Frontend**: React 19, Vite 8, TypeScript
 - **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`)
+- **In-Browser PDF Engine**: `pdf-lib`, `pdfjs-dist` (local Web Worker)
 - **Backend / API**: Netlify Serverless Functions (TypeScript `.mts`)
-- **Processing**: Cloud-based PDF Engine (`@ilovepdf/ilovepdf-nodejs`)
-- **Routing**: Lightweight hash-based client-side router
+- **Cloud PDF Processing**: `@ilovepdf/ilovepdf-nodejs`
+- **Routing**: Lightweight hash-based client router
 - **Deployment**: Netlify
 
 ---
@@ -37,7 +41,7 @@ Developed by **Teshan Pamodya** • [Website](https://teshan.click) • [GitHub]
 ### Prerequisites
 
 - Node.js 18+
-- An API Key pair (Public & Secret Key)
+- An API Key pair (Public Key & Secret Key)
 
 ### 1. Clone & Install
 
@@ -70,23 +74,24 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 🌐 Deploy to Netlify
 
-1. Push your code to your Git repository.
-2. Connect your repository to [Netlify](https://netlify.com).
+1. Push your code to your GitHub repository.
+2. Connect the repository to [Netlify](https://netlify.com).
 3. Build settings are automatically detected from `netlify.toml`:
    - **Build command**: `npm run build`
    - **Publish directory**: `dist`
    - **Functions directory**: `netlify/functions`
-4. Add your environment variables in Netlify:
+4. Configure environment variables in Netlify site settings:
    - `ILOVEPDF_PUBLIC_KEY`
    - `ILOVEPDF_SECRET_KEY`
 5. Deploy! 🎉
 
 ---
 
-## 🔒 Security
+## 🔒 Security & Privacy
 
-- All API credentials are kept strictly server-side in serverless functions and are never exposed to the client.
-- Documents are processed in-memory in real time over HTTPS and are never permanently stored.
+- All API keys and credentials are kept strictly server-side in serverless functions and never exposed to the client.
+- In-browser editing (Text, Whiteout, Images, Drawing) executes locally using `pdf-lib` without sending document contents across the wire.
+- Files processed through serverless endpoints are handled in-memory in real time over HTTPS and are never stored.
 
 ---
 
