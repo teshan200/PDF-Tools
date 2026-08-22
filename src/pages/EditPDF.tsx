@@ -88,6 +88,99 @@ function hexToRgba(hex: string, opacity: number) {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
+// ─── Smart Paragraph & Text Grouping ─────────────────────────────────────────
+function extractParagraphs(rawItems: any[], pageHeight: number, pageNum: number): ExtractedSpan[] {
+  if (!rawItems.length) return []
+
+  // 1. Extract non-empty text items
+  const boxes = rawItems
+    .filter((item) => item.str && item.str.trim())
+    .map((item, idx) => {
+      const tx = item.transform[4]
+      const ty = item.transform[5]
+      const h = item.height || Math.abs(item.transform[3]) || 13
+      const w = item.width || item.str.length * h * 0.55
+      const y = pageHeight - ty - h
+      return {
+        id: `raw_${pageNum}_${idx}`,
+        text: item.str,
+        x: tx,
+        y: y,
+        width: w,
+        height: h,
+        fontSize: Math.max(8, Math.round(h)),
+      }
+    })
+
+  // 2. Sort top-to-bottom, left-to-right
+  boxes.sort((a, b) => {
+    if (Math.abs(a.y - b.y) > 3) return a.y - b.y
+    return a.x - b.x
+  })
+
+  // 3. Merge words on the exact same line
+  interface LineItem {
+    text: string
+    x: number
+    y: number
+    width: number
+    height: number
+    fontSize: number
+  }
+
+  const lines: LineItem[] = []
+  for (const box of boxes) {
+    const prevLine = lines[lines.length - 1]
+    if (prevLine && Math.abs(box.y - prevLine.y) <= 4) {
+      const gap = box.x - (prevLine.x + prevLine.width)
+      const separator = gap > 2 ? ' ' : ''
+      prevLine.text += separator + box.text
+      prevLine.width = Math.max(prevLine.width, box.x + box.width - prevLine.x)
+      prevLine.height = Math.max(prevLine.height, box.height)
+    } else {
+      lines.push({
+        text: box.text,
+        x: box.x,
+        y: box.y,
+        width: box.width,
+        height: box.height,
+        fontSize: box.fontSize,
+      })
+    }
+  }
+
+  // 4. Merge consecutive lines of the same paragraph block
+  const paragraphs: ExtractedSpan[] = []
+  for (const line of lines) {
+    const prevPara = paragraphs[paragraphs.length - 1]
+    if (prevPara) {
+      const verticalGap = line.y - (prevPara.y + prevPara.height)
+      const isConsecutive = verticalGap >= -3 && verticalGap <= prevPara.fontSize * 1.5
+      const isSameFont = Math.abs(line.fontSize - prevPara.fontSize) <= 2
+      const isSameColumn = Math.abs(line.x - prevPara.x) <= 35 // Allow standard indentation
+
+      if (isConsecutive && isSameFont && isSameColumn) {
+        prevPara.text += '\n' + line.text
+        prevPara.width = Math.max(prevPara.width, line.x + line.width - prevPara.x)
+        prevPara.height = line.y + line.height - prevPara.y
+        continue
+      }
+    }
+
+    paragraphs.push({
+      id: `para_${pageNum}_${paragraphs.length}`,
+      text: line.text,
+      x: Math.round(line.x),
+      y: Math.round(line.y),
+      width: Math.round(line.width),
+      height: Math.round(line.height),
+      fontSize: line.fontSize,
+    })
+  }
+
+  return paragraphs
+}
+
 export default function EditPDF() {
   const [files, setFiles] = useState<File[]>([])
   const [pdfDoc, setPdfDoc] = useState<any>(null)
@@ -195,27 +288,10 @@ export default function EditPDF() {
       const unscaledViewport = page.getViewport({ scale: 1.0 })
       setPageDimensions({ width: unscaledViewport.width, height: unscaledViewport.height })
 
-      // Extract text items from the current page
+      // Extract text items grouped by paragraph from the current page
       try {
         const textContent = await page.getTextContent()
-        const spans: ExtractedSpan[] = []
-        textContent.items.forEach((item: any, idx: number) => {
-          if (!item.str || !item.str.trim()) return
-          const tx = item.transform[4]
-          const ty = item.transform[5]
-          const h = item.height || Math.abs(item.transform[3]) || 14
-          const w = item.width || (item.str.length * h * 0.55)
-          const y = unscaledViewport.height - ty - h * 0.95
-          spans.push({
-            id: `span_${currentPage}_${idx}`,
-            text: item.str,
-            x: Math.round(tx),
-            y: Math.round(y),
-            width: Math.max(10, Math.round(w)),
-            height: Math.max(10, Math.round(h)),
-            fontSize: Math.max(8, Math.round(h)),
-          })
-        })
+        const spans = extractParagraphs(textContent.items, unscaledViewport.height, currentPage)
         if (!cancelled) setExtractedSpans(spans)
       } catch (err) {
         console.error('Failed to extract text content:', err)
@@ -444,22 +520,20 @@ export default function EditPDF() {
     setExtractedSpans((prev) => prev.filter((s) => s.id !== span.id))
     setHoveredSpanId(null)
 
-    // 2. Create whiteout rectangle with generous padding to completely cover original text
-    const padX = 4
-    const padY = 4
+    // 2. Create whiteout rectangle precisely covering the whole paragraph without leaking onto adjacent rows
     const whiteoutBox: WhiteoutItem = {
       id: 'box_' + Date.now(),
       type: 'whiteout',
       page: currentPage,
-      x: Math.max(0, span.x - padX),
-      y: Math.max(0, span.y - padY),
-      width: span.width + padX * 2 + 4,
-      height: span.height + padY * 2 + 2,
+      x: Math.max(0, span.x - 2),
+      y: Math.max(0, span.y - 1),
+      width: span.width + 4,
+      height: span.height + 2,
       color: '#ffffff',
       opacity: 1.0,
     }
 
-    // 3. Create editable text box right on top
+    // 3. Create editable multiline text box for the paragraph
     const newText: TextItem = {
       id: 'text_' + (Date.now() + 1),
       type: 'text',
@@ -570,13 +644,14 @@ export default function EditPDF() {
             else if (item.isBold) selectedFont = helveticaBold
             else if (item.isItalic) selectedFont = helveticaOblique
 
-            const pdfY = pageHeight - item.y - item.fontSize * 0.9
+            const pdfY = pageHeight - item.y - item.fontSize * 0.85
             page.drawText(item.text, {
               x: item.x,
               y: pdfY,
               size: item.fontSize,
               font: selectedFont,
               color: hexToRgb(item.color),
+              lineHeight: item.fontSize * 1.25,
             })
           } else if (item.type === 'image') {
             let embeddedImg: any
@@ -1246,6 +1321,18 @@ export default function EditPDF() {
                 }
 
                 if (item.type === 'text') {
+                  const lines = item.text.split('\n')
+                  const lineCount = Math.max(1, lines.length)
+                  const maxCharsInLine = Math.max(1, ...lines.map((l) => l.length))
+                  const estimatedWidth = Math.max(
+                    40,
+                    Math.round(maxCharsInLine * item.fontSize * scale * 0.58 + 12)
+                  )
+                  const estimatedHeight = Math.max(
+                    Math.round(item.fontSize * scale * 1.3),
+                    Math.round(lineCount * item.fontSize * scale * 1.25 + 4)
+                  )
+
                   return (
                     <div
                       key={item.id}
@@ -1259,12 +1346,16 @@ export default function EditPDF() {
                       }}
                       onPointerDown={(e) => startDrag(item.id, e)}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(item.id) }}
-                      className={`group inline-block ${isSelected ? 'ring-2 ring-indigo-500 bg-white/95 shadow-sm rounded px-1' : 'hover:ring-1 hover:ring-indigo-300 rounded px-1'}`}
+                      className={`group inline-block ${
+                        isSelected
+                          ? 'ring-2 ring-indigo-500 bg-white/95 shadow-sm rounded-lg p-1'
+                          : 'hover:ring-1 hover:ring-indigo-300 rounded-lg p-0.5'
+                      }`}
                     >
-                      <input
-                        ref={isSelected ? activeInputRef : undefined}
-                        type="text"
+                      <textarea
+                        ref={isSelected ? (activeInputRef as any) : undefined}
                         value={item.text}
+                        rows={lineCount}
                         onChange={(e) => {
                           const val = e.target.value
                           setAnnotations((prev) => prev.map((a) => (a.id === item.id ? { ...a, text: val } : a)))
@@ -1272,6 +1363,7 @@ export default function EditPDF() {
                         style={{
                           fontFamily: item.fontFamily === 'TimesRoman' ? 'Times New Roman' : item.fontFamily,
                           fontSize: item.fontSize * scale,
+                          lineHeight: 1.25,
                           fontWeight: item.isBold ? 'bold' : 'normal',
                           fontStyle: item.isItalic ? 'italic' : 'normal',
                           color: item.color,
@@ -1280,8 +1372,11 @@ export default function EditPDF() {
                           border: 'none',
                           padding: '0 2px',
                           margin: 0,
-                          minWidth: '30px',
-                          width: `${Math.max(30, item.text.length * item.fontSize * scale * 0.62)}px`,
+                          resize: 'none',
+                          overflow: 'hidden',
+                          display: 'block',
+                          width: `${estimatedWidth}px`,
+                          height: `${estimatedHeight}px`,
                         }}
                       />
                       {isSelected && (
@@ -1290,7 +1385,7 @@ export default function EditPDF() {
                           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                           onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                           onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
-                          className="absolute -top-3 -right-3 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                          className="absolute -top-3.5 -right-3.5 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-40 transition-transform hover:scale-110"
                           title="Delete text"
                         >
                           ✕
