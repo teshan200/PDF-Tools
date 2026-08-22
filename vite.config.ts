@@ -9,4 +9,10 @@ export default defineConfig({
     tailwindcss(),
     netlify(),
   ],
+  optimizeDeps: {
+    include: ['pdfjs-dist'],
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+  },
 })
