@@ -440,20 +440,26 @@ export default function EditPDF() {
 
   // ─── 6. Edit Existing Text Span ─────────────────────────────────────────────
   const handleEditExistingSpan = (span: ExtractedSpan) => {
-    // 1. Create whiteout rectangle over the original text
+    // 1. Remove the span from extractedSpans so the hover box is permanently gone
+    setExtractedSpans((prev) => prev.filter((s) => s.id !== span.id))
+    setHoveredSpanId(null)
+
+    // 2. Create whiteout rectangle with generous padding to completely cover original text
+    const padX = 4
+    const padY = 4
     const whiteoutBox: WhiteoutItem = {
       id: 'box_' + Date.now(),
       type: 'whiteout',
       page: currentPage,
-      x: Math.max(0, span.x - 2),
-      y: Math.max(0, span.y - 1),
-      width: span.width + 6,
-      height: span.height + 4,
+      x: Math.max(0, span.x - padX),
+      y: Math.max(0, span.y - padY),
+      width: span.width + padX * 2 + 4,
+      height: span.height + padY * 2 + 2,
       color: '#ffffff',
       opacity: 1.0,
     }
 
-    // 2. Create an editable text annotation right on top
+    // 3. Create editable text box right on top
     const newText: TextItem = {
       id: 'text_' + (Date.now() + 1),
       type: 'text',
@@ -471,6 +477,12 @@ export default function EditPDF() {
     setAnnotations((prev) => [...prev, whiteoutBox, newText])
     setSelectedId(newText.id)
     setActiveTool('select')
+
+    // Focus input after state update
+    setTimeout(() => {
+      activeInputRef.current?.focus()
+      activeInputRef.current?.select()
+    }, 50)
   }
 
   // ─── 7. Undo & Delete ───────────────────────────────────────────────────────
@@ -1154,6 +1166,7 @@ export default function EditPDF() {
 
               {/* Extracted Interactive Text Layer (Click any original text to edit) */}
               {activeTool === 'select' &&
+                !selectedId &&
                 extractedSpans.map((span) => {
                   const isHovered = hoveredSpanId === span.id
                   return (
@@ -1168,7 +1181,7 @@ export default function EditPDF() {
                       }}
                       className={`absolute rounded transition-all cursor-pointer z-10 group ${
                         isHovered
-                          ? 'border border-dashed border-indigo-400 bg-indigo-500/15'
+                          ? 'border border-dashed border-indigo-500 bg-indigo-500/15 shadow-2xs'
                           : 'border border-transparent'
                       }`}
                       style={{
@@ -1180,8 +1193,8 @@ export default function EditPDF() {
                       title="Click to edit this text"
                     >
                       {isHovered && (
-                        <div className="absolute -top-5 left-0 bg-indigo-700 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm pointer-events-none whitespace-nowrap z-30 font-medium">
-                          ✏️ Click to edit
+                        <div className="absolute -top-5 left-0 bg-indigo-700 text-white text-[10px] px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-30 font-medium flex items-center gap-1">
+                          <span>✏️</span> Click to edit
                         </div>
                       )}
                     </div>
@@ -1204,6 +1217,7 @@ export default function EditPDF() {
                         width: item.width * scale,
                         height: item.height * scale,
                         backgroundColor: hexToRgba(item.color, item.opacity),
+                        zIndex: 15,
                       }}
                       onPointerDown={(e) => startDrag(item.id, e)}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(item.id) }}
@@ -1241,10 +1255,11 @@ export default function EditPDF() {
                         left: item.x * scale,
                         top: item.y * scale,
                         cursor: 'move',
+                        zIndex: isSelected ? 35 : 25,
                       }}
                       onPointerDown={(e) => startDrag(item.id, e)}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(item.id) }}
-                      className={`group inline-block ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50/40 rounded px-1' : 'hover:ring-1 hover:ring-indigo-300 rounded px-1'}`}
+                      className={`group inline-block ${isSelected ? 'ring-2 ring-indigo-500 bg-white/95 shadow-sm rounded px-1' : 'hover:ring-1 hover:ring-indigo-300 rounded px-1'}`}
                     >
                       <input
                         ref={isSelected ? activeInputRef : undefined}
@@ -1263,10 +1278,10 @@ export default function EditPDF() {
                           backgroundColor: 'transparent',
                           outline: 'none',
                           border: 'none',
-                          padding: 0,
+                          padding: '0 2px',
                           margin: 0,
                           minWidth: '30px',
-                          width: `${Math.max(30, item.text.length * item.fontSize * scale * 0.65)}px`,
+                          width: `${Math.max(30, item.text.length * item.fontSize * scale * 0.62)}px`,
                         }}
                       />
                       {isSelected && (
