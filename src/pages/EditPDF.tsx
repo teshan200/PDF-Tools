@@ -11,7 +11,7 @@ import ErrorMessage from '../components/ErrorMessage'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type ToolMode = 'select' | 'editText' | 'text' | 'whiteout' | 'draw' | 'image'
+type ToolMode = 'select' | 'text' | 'whiteout' | 'draw' | 'image'
 
 interface ExtractedSpan {
   id: string
@@ -91,7 +91,6 @@ function hexToRgba(hex: string, opacity: number) {
 export default function EditPDF() {
   const [files, setFiles] = useState<File[]>([])
   const [pdfDoc, setPdfDoc] = useState<any>(null)
-  const [pdfBytes, setPdfBytes] = useState<ArrayBuffer | null>(null)
   const [numPages, setNumPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageDimensions, setPageDimensions] = useState<{ width: number; height: number }>({ width: 595, height: 842 })
@@ -109,6 +108,7 @@ export default function EditPDF() {
   const [annotations, setAnnotations] = useState<AnnotationItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [extractedSpans, setExtractedSpans] = useState<ExtractedSpan[]>([])
+  const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null)
 
   // Current Tool Styling Options
   const [textColor, setTextColor] = useState('#000000')
@@ -131,6 +131,7 @@ export default function EditPDF() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const activeInputRef = useRef<HTMLInputElement | null>(null)
   const dragRef = useRef<{
     id: string
     startX: number
@@ -148,7 +149,6 @@ export default function EditPDF() {
     const file = files[0]
     if (!file) {
       setPdfDoc(null)
-      setPdfBytes(null)
       setNumPages(0)
       setAnnotations([])
       setSelectedId(null)
@@ -164,7 +164,6 @@ export default function EditPDF() {
 
     file.arrayBuffer().then((buffer) => {
       if (cancelled) return
-      setPdfBytes(buffer)
       return pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise
     }).then((doc) => {
       if (cancelled || !doc) return
@@ -249,8 +248,8 @@ export default function EditPDF() {
   // Auto-fit on initial load
   const fitToWidth = useCallback(() => {
     if (!containerRef.current || !pageDimensions.width) return
-    const containerWidth = containerRef.current.clientWidth - 48 // margin
-    const targetScale = Math.min(1.5, Math.max(0.4, (containerWidth / pageDimensions.width)))
+    const containerWidth = containerRef.current.clientWidth - 64
+    const targetScale = Math.min(1.4, Math.max(0.4, (containerWidth / pageDimensions.width)))
     setScale(parseFloat(targetScale.toFixed(2)))
   }, [pageDimensions.width])
 
@@ -276,7 +275,7 @@ export default function EditPDF() {
         page: currentPage,
         x: Math.round(x),
         y: Math.round(y),
-        text: 'Enter text here',
+        text: 'Enter text',
         fontSize: textSize,
         fontFamily: textFont,
         isBold: textBold,
@@ -403,7 +402,6 @@ export default function EditPDF() {
       const dataUrl = ev.target?.result as string
       const img = new window.Image()
       img.onload = () => {
-        // Compute reasonable size
         let w = img.width
         let h = img.height
         const maxDim = 200
@@ -450,7 +448,7 @@ export default function EditPDF() {
       x: Math.max(0, span.x - 2),
       y: Math.max(0, span.y - 1),
       width: span.width + 6,
-      height: span.height + 3,
+      height: span.height + 4,
       color: '#ffffff',
       opacity: 1.0,
     }
@@ -491,11 +489,21 @@ export default function EditPDF() {
     setSelectedId(null)
   }
 
-  // Keyboard shortcut: Delete or Backspace key to remove selected item
+  // Keyboard shortcut: Delete or Backspace key to remove selected item, Ctrl+Z for undo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        undoLast()
+        return
+      }
+
+      if (e.key === 'Escape') {
+        setSelectedId(null)
+        return
+      }
+
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
-        // Do not trigger if typing in an active text input or textarea
         const tag = (document.activeElement?.tagName || '').toLowerCase()
         if (tag === 'input' || tag === 'textarea') return
         e.preventDefault()
@@ -506,7 +514,7 @@ export default function EditPDF() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId, deleteSelected])
 
-  // ─── 7. Export Edited PDF with pdf-lib ──────────────────────────────────────
+  // ─── 8. Export Edited PDF with pdf-lib ──────────────────────────────────────
   const handleExport = async () => {
     const file = files[0]
     if (!file) return
@@ -534,7 +542,6 @@ export default function EditPDF() {
 
         for (const item of pageAnnotations) {
           if (item.type === 'whiteout') {
-            // Invert Y coordinate for PDF coordinate space (bottom-left origin)
             const pdfY = pageHeight - (item.y + item.height)
             page.drawRectangle({
               x: item.x,
@@ -551,7 +558,6 @@ export default function EditPDF() {
             else if (item.isBold) selectedFont = helveticaBold
             else if (item.isItalic) selectedFont = helveticaOblique
 
-            // Invert Y coordinate (accounting for text baseline)
             const pdfY = pageHeight - item.y - item.fontSize * 0.9
             page.drawText(item.text, {
               x: item.x,
@@ -618,52 +624,52 @@ export default function EditPDF() {
     if (downloadUrl) URL.revokeObjectURL(downloadUrl)
     setFiles([])
     setPdfDoc(null)
-    setPdfBytes(null)
     setAnnotations([])
     setSelectedId(null)
+    setExtractedSpans([])
     setDownloadUrl(null)
   }
 
   return (
     <ToolPageLayout
       title="Edit PDF"
-      description="Add text, erase unwanted content with whiteout, insert signatures & images, and draw annotations."
+      description="Click existing text to edit, erase unwanted content with whiteout, add signatures & draw directly."
       color="indigo"
       icon={<EditIcon />}
     >
       {downloadUrl ? (
-        <div className="text-center py-8 space-y-6">
+        <div className="text-center py-10 space-y-6 max-w-lg mx-auto bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
           <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold text-slate-900">Your PDF is Ready!</h3>
-            <p className="text-sm text-slate-500">All your edits, text, and annotations have been saved into your document.</p>
+            <h3 className="text-2xl font-bold text-slate-900">Your Edited PDF is Ready!</h3>
+            <p className="text-sm text-slate-500">All text edits, whiteouts, images, and drawings are saved cleanly.</p>
           </div>
-          <div className="flex justify-center gap-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
             <a
               href={downloadUrl}
               download={downloadName}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-indigo-200 transition-colors text-base"
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-indigo-200 transition-colors text-sm"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Download Edited PDF
+              Download PDF
             </a>
             <button
               onClick={() => setDownloadUrl(null)}
-              className="px-6 py-3.5 border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+              className="px-5 py-3.5 border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 transition-colors text-sm"
             >
               Continue Editing
             </button>
             <button
               onClick={handleReset}
-              className="px-6 py-3.5 text-slate-400 hover:text-red-500 font-medium transition-colors"
+              className="px-4 py-3.5 text-slate-400 hover:text-red-500 font-medium transition-colors text-sm"
             >
-              Start New File
+              New File
             </button>
           </div>
         </div>
@@ -675,58 +681,47 @@ export default function EditPDF() {
           {errorMsg && <ErrorMessage message={errorMsg} onRetry={handleReset} />}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
             <div className="p-3 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-xl">🔤</span>
-              <p className="font-bold text-xs text-slate-800 mt-1">Add Text</p>
-              <p className="text-[11px] text-slate-500">Insert custom text anywhere</p>
+              <span className="text-xl">✏️</span>
+              <p className="font-bold text-xs text-slate-800 mt-1">Edit Existing Text</p>
+              <p className="text-[11px] text-slate-500">Click any text in the PDF to change it</p>
             </div>
             <div className="p-3 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
               <span className="text-xl">⬜</span>
-              <p className="font-bold text-xs text-slate-800 mt-1">Whiteout & Erase</p>
-              <p className="text-[11px] text-slate-500">Cover up text or highlight</p>
+              <p className="font-bold text-xs text-slate-800 mt-1">Whiteout &amp; Erase</p>
+              <p className="text-[11px] text-slate-500">Cleanly cover up unwanted text</p>
             </div>
             <div className="p-3 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
               <span className="text-xl">🖼️</span>
-              <p className="font-bold text-xs text-slate-800 mt-1">Add Image & Signature</p>
-              <p className="text-[11px] text-slate-500">Place logos, stamps & signs</p>
+              <p className="font-bold text-xs text-slate-800 mt-1">Images &amp; Signatures</p>
+              <p className="text-[11px] text-slate-500">Add stamps, photos and signs</p>
             </div>
             <div className="p-3 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-xl">✏️</span>
+              <span className="text-xl">🖌️</span>
               <p className="font-bold text-xs text-slate-800 mt-1">Freehand Drawing</p>
-              <p className="text-[11px] text-slate-500">Draw notes, arrows & lines</p>
+              <p className="text-[11px] text-slate-500">Draw notes, arrows &amp; highlights</p>
             </div>
           </div>
         </div>
       ) : (
         /* ── Modern Studio Workspace ── */
         <div className="space-y-3" ref={containerRef}>
-          {/* Top Control Bar */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          {/* Main Top Studio Toolbar */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-2 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
             {/* Tool Selection Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl flex-wrap">
+            <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl flex-wrap">
               <button
                 onClick={() => { setActiveTool('select'); setSelectedId(null) }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTool === 'select' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  activeTool === 'select'
+                    ? 'bg-white text-indigo-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Select and Move objects"
+                title="Select items or click existing text to edit"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                 </svg>
-                Select
-              </button>
-
-              <button
-                onClick={() => { setActiveTool('editText'); setSelectedId(null) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTool === 'editText' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100'
-                }`}
-                title="Click any text currently in the PDF to edit it directly"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Text in PDF
+                Select &amp; Edit
               </button>
 
               <button
@@ -734,7 +729,7 @@ export default function EditPDF() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTool === 'text' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Click anywhere to add new text"
+                title="Click anywhere to place a new text box"
               >
                 <span className="font-serif font-bold text-sm leading-none">T</span>
                 Add Text
@@ -745,18 +740,18 @@ export default function EditPDF() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTool === 'whiteout' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Cover existing text or add highlight box"
+                title="Place a white eraser box over text"
               >
-                <div className="w-3.5 h-3.5 border border-slate-400 bg-white rounded-xs" />
-                Whiteout / Box
+                <div className="w-3.5 h-3.5 border border-slate-400 bg-white rounded-xs shadow-2xs" />
+                Whiteout
               </button>
 
               <button
                 onClick={() => {
                   imageInputRef.current?.click()
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900`}
-                title="Upload image or signature"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900"
+                title="Upload image or digital signature"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -776,7 +771,7 @@ export default function EditPDF() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTool === 'draw' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Freehand drawing"
+                title="Draw freehand with pen or highlighter"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -786,72 +781,76 @@ export default function EditPDF() {
             </div>
 
             {/* Page Nav */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Previous page"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <span className="text-xs font-semibold text-slate-700 px-2 min-w-[75px] text-center">
+              <span className="text-xs font-semibold text-slate-700 px-1 min-w-[70px] text-center">
                 {currentPage} / {numPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
                 disabled={currentPage >= numPages}
-                className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Next page"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
 
             {/* Zoom Controls */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => setScale((s) => Math.max(0.4, parseFloat((s - 0.15).toFixed(2))))}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 text-xs font-bold"
                 title="Zoom Out"
               >
                 -
               </button>
-              <span className="text-xs font-semibold text-slate-600 w-10 text-center">
+              <span className="text-xs font-semibold text-slate-700 w-9 text-center">
                 {Math.round(scale * 100)}%
               </span>
               <button
                 onClick={() => setScale((s) => Math.min(2.0, parseFloat((s + 0.15).toFixed(2))))}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 text-xs font-bold"
                 title="Zoom In"
               >
                 +
               </button>
               <button
                 onClick={fitToWidth}
-                className="text-[11px] font-medium text-slate-500 hover:text-indigo-600 px-2 py-1 bg-slate-100 rounded-lg"
+                className="text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors ml-0.5"
               >
                 Fit
               </button>
             </div>
 
-            {/* Export & Actions */}
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1.5 ml-auto">
               <button
                 onClick={undoLast}
                 disabled={annotations.length === 0}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 disabled:opacity-30 text-xs flex items-center gap-1"
-                title="Undo last change"
+                className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 text-xs flex items-center gap-1 font-medium transition-colors"
+                title="Undo (Ctrl+Z)"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4" />
                 </svg>
+                Undo
               </button>
+
               <button
                 onClick={handleExport}
-                className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all hover:shadow"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -861,57 +860,60 @@ export default function EditPDF() {
             </div>
           </div>
 
-          {/* Dynamic Secondary Options Bar */}
-          {activeTool === 'editText' && (
-            <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs text-indigo-950 shadow-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-base">✏️</span>
-                <span><strong>Click any text below</strong> to edit it directly. A whiteout layer will cover the original text automatically.</span>
-              </div>
-              <span className="text-indigo-700 bg-white font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-[11px] shrink-0">
-                {extractedSpans.length} text items ready
-              </span>
-            </div>
-          )}
-
+          {/* Contextual Floating Styling Ribbon for Active Tool */}
           {(activeTool === 'text' || (selectedItem && selectedItem.type === 'text')) && (
-            <div className="bg-indigo-50/80 border border-indigo-100 rounded-xl px-4 py-2 flex items-center gap-4 flex-wrap text-xs">
-              <span className="font-bold text-indigo-900">Text Options:</span>
-              <div className="flex items-center gap-1.5">
-                <span>Font:</span>
-                <select
-                  value={selectedItem?.type === 'text' ? selectedItem.fontFamily : textFont}
-                  onChange={(e) => {
-                    const f = e.target.value as any
-                    setTextFont(f)
-                    if (selectedItem?.type === 'text') {
-                      setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontFamily: f } : a)))
-                    }
-                  }}
-                  className="bg-white border border-indigo-200 rounded px-2 py-1 font-medium"
-                >
-                  <option value="Helvetica">Helvetica / Arial</option>
-                  <option value="TimesRoman">Times New Roman</option>
-                  <option value="Courier">Courier</option>
-                </select>
-              </div>
+            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs animate-fadeIn">
+              <span className="font-bold text-slate-800 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                Text Style:
+              </span>
 
-              <div className="flex items-center gap-1.5">
-                <span>Size:</span>
-                <input
-                  type="number"
-                  min={8}
-                  max={72}
-                  value={selectedItem?.type === 'text' ? selectedItem.fontSize : textSize}
-                  onChange={(e) => {
-                    const sz = Math.max(8, Number(e.target.value))
-                    setTextSize(sz)
+              <select
+                value={selectedItem?.type === 'text' ? selectedItem.fontFamily : textFont}
+                onChange={(e) => {
+                  const f = e.target.value as any
+                  setTextFont(f)
+                  if (selectedItem?.type === 'text') {
+                    setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontFamily: f } : a)))
+                  }
+                }}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-medium text-slate-800 outline-none"
+              >
+                <option value="Helvetica">Helvetica / Arial</option>
+                <option value="TimesRoman">Times New Roman</option>
+                <option value="Courier">Courier</option>
+              </select>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    const currentSz = selectedItem?.type === 'text' ? selectedItem.fontSize : textSize
+                    const newSz = Math.max(8, currentSz - 2)
+                    setTextSize(newSz)
                     if (selectedItem?.type === 'text') {
-                      setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontSize: sz } : a)))
+                      setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontSize: newSz } : a)))
                     }
                   }}
-                  className="w-14 bg-white border border-indigo-200 rounded px-1.5 py-1 text-center font-medium"
-                />
+                  className="w-6 h-6 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center font-bold"
+                >
+                  -
+                </button>
+                <span className="w-8 text-center font-semibold text-slate-700">
+                  {selectedItem?.type === 'text' ? selectedItem.fontSize : textSize}
+                </span>
+                <button
+                  onClick={() => {
+                    const currentSz = selectedItem?.type === 'text' ? selectedItem.fontSize : textSize
+                    const newSz = Math.min(72, currentSz + 2)
+                    setTextSize(newSz)
+                    if (selectedItem?.type === 'text') {
+                      setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontSize: newSz } : a)))
+                    }
+                  }}
+                  className="w-6 h-6 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center font-bold"
+                >
+                  +
+                </button>
               </div>
 
               <div className="flex items-center gap-1">
@@ -923,10 +925,10 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, isBold: isB } : a)))
                     }
                   }}
-                  className={`px-2 py-1 font-bold rounded border ${
+                  className={`px-2 py-1 font-bold rounded-lg border ${
                     (selectedItem?.type === 'text' ? selectedItem.isBold : textBold)
                       ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white border-indigo-200 text-indigo-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-700'
                   }`}
                 >
                   B
@@ -939,18 +941,17 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, isItalic: isI } : a)))
                     }
                   }}
-                  className={`px-2 py-1 italic font-serif rounded border ${
+                  className={`px-2 py-1 italic font-serif rounded-lg border ${
                     (selectedItem?.type === 'text' ? selectedItem.isItalic : textItalic)
                       ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white border-indigo-200 text-indigo-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-700'
                   }`}
                 >
                   I
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span>Color:</span>
+              <div className="flex items-center gap-1.5">
                 {['#000000', '#2563eb', '#dc2626', '#16a34a', '#9333ea'].map((c) => (
                   <button
                     key={c}
@@ -961,31 +962,32 @@ export default function EditPDF() {
                       }
                     }}
                     style={{ backgroundColor: c }}
-                    className={`w-5 h-5 rounded-full border-2 ${
+                    className={`w-5 h-5 rounded-full border-2 transition-transform ${
                       (selectedItem?.type === 'text' ? selectedItem.color : textColor) === c
-                        ? 'border-indigo-600 scale-110'
+                        ? 'border-indigo-600 scale-110 shadow-xs'
                         : 'border-white'
                     }`}
                   />
                 ))}
               </div>
+
               {selectedItem && (
                 <button
                   onClick={deleteSelected}
-                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded border border-red-200 font-semibold transition-colors"
+                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg border border-red-200 font-semibold transition-colors text-xs"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete Item
+                  Delete
                 </button>
               )}
             </div>
           )}
 
           {(activeTool === 'whiteout' || (selectedItem && selectedItem.type === 'whiteout')) && (
-            <div className="bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 flex items-center gap-4 flex-wrap text-xs">
-              <span className="font-bold text-slate-800">Box &amp; Whiteout Options:</span>
+            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs">
+              <span className="font-bold text-slate-800">Box Style:</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -995,9 +997,10 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#ffffff', opacity: 1.0 } : a)))
                     }
                   }}
-                  className="px-2.5 py-1 bg-white border border-slate-300 rounded font-medium shadow-xs hover:bg-slate-50"
+                  className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg font-medium shadow-2xs hover:bg-slate-50 flex items-center gap-1.5"
                 >
-                  ⬜ Solid White (Erase Text)
+                  <div className="w-3 h-3 bg-white border border-slate-400 rounded-xs" />
+                  Whiteout (Erase)
                 </button>
                 <button
                   onClick={() => {
@@ -1007,48 +1010,49 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#000000', opacity: 1.0 } : a)))
                     }
                   }}
-                  className="px-2.5 py-1 bg-black text-white rounded font-medium shadow-xs"
+                  className="px-2.5 py-1 bg-black text-white rounded-lg font-medium shadow-2xs flex items-center gap-1.5"
                 >
-                  ⬛ Black (Redaction)
+                  <div className="w-3 h-3 bg-black rounded-xs" />
+                  Black (Redact)
                 </button>
                 <button
                   onClick={() => {
                     setBoxColor('#fef08a')
-                    setBoxOpacity(0.4)
+                    setBoxOpacity(0.45)
                     if (selectedItem?.type === 'whiteout') {
-                      setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#fef08a', opacity: 0.4 } : a)))
+                      setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#fef08a', opacity: 0.45 } : a)))
                     }
                   }}
-                  className="px-2.5 py-1 bg-yellow-200 text-yellow-900 border border-yellow-300 rounded font-medium shadow-xs"
+                  className="px-2.5 py-1 bg-yellow-100 text-yellow-900 border border-yellow-300 rounded-lg font-medium shadow-2xs flex items-center gap-1.5"
                 >
-                  🟨 Yellow Highlighter
+                  <div className="w-3 h-3 bg-yellow-400 rounded-xs" />
+                  Highlighter
                 </button>
               </div>
 
               {selectedItem && (
                 <button
                   onClick={deleteSelected}
-                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded border border-red-200 font-semibold transition-colors"
+                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg border border-red-200 font-semibold transition-colors text-xs"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete Item
+                  Delete Box
                 </button>
               )}
             </div>
           )}
 
           {activeTool === 'draw' && (
-            <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-2 flex items-center gap-4 flex-wrap text-xs">
-              <span className="font-bold text-rose-900">Pen / Highlighter:</span>
+            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs">
+              <span className="font-bold text-slate-800">Pen &amp; Highlighter:</span>
               <div className="flex items-center gap-2">
-                <span>Color:</span>
                 {[
                   { c: '#000000', o: 1.0 },
                   { c: '#2563eb', o: 1.0 },
                   { c: '#ef4444', o: 1.0 },
-                  { c: '#eab308', o: 0.45 }, // Highlighter
+                  { c: '#eab308', o: 0.45 },
                   { c: '#22c55e', o: 0.45 },
                 ].map((item) => (
                   <button
@@ -1058,19 +1062,19 @@ export default function EditPDF() {
                       setDrawOpacity(item.o)
                     }}
                     style={{ backgroundColor: item.c }}
-                    className={`w-5 h-5 rounded-full border-2 ${drawColor === item.c ? 'border-rose-600 scale-110' : 'border-white'}`}
+                    className={`w-5 h-5 rounded-full border-2 transition-transform ${drawColor === item.c ? 'border-indigo-600 scale-110 shadow-xs' : 'border-white'}`}
                   />
                 ))}
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <span>Thickness:</span>
                 {[2, 4, 8, 14].map((w) => (
                   <button
                     key={w}
                     onClick={() => setDrawWidth(w)}
                     className={`px-2 py-0.5 rounded font-medium border ${
-                      drawWidth === w ? 'bg-rose-600 text-white border-rose-600' : 'bg-white border-rose-200 text-rose-900'
+                      drawWidth === w ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-700'
                     }`}
                   >
                     {w}px
@@ -1080,13 +1084,13 @@ export default function EditPDF() {
             </div>
           )}
 
-          {/* Canvas Workspace Viewport */}
+          {/* Workspace Viewport Canvas */}
           <div
-            className="border border-slate-200 rounded-2xl bg-slate-100/90 shadow-inner overflow-auto flex justify-center items-start p-6"
-            style={{ maxHeight: '72vh', minHeight: '400px' }}
+            className="border border-slate-200/80 rounded-2xl bg-slate-100/90 shadow-inner overflow-auto flex justify-center items-start p-6 relative select-none"
+            style={{ maxHeight: '74vh', minHeight: '450px' }}
           >
             <div
-              className="relative shadow-2xl bg-white rounded transition-shadow duration-200 select-none"
+              className="relative shadow-xl bg-white rounded transition-shadow duration-200"
               style={{
                 width: pageDimensions.width * scale,
                 height: pageDimensions.height * scale,
@@ -1096,7 +1100,7 @@ export default function EditPDF() {
                     : activeTool === 'whiteout'
                     ? 'crosshair'
                     : activeTool === 'draw'
-                    ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'black\' stroke-width=\'2\'><path d=\'M15.232 5.232l3.536 3.536M6.5 21.036H3v-3.572L16.732 3.732z\'/></svg>") 0 16, crosshair'
+                    ? 'crosshair'
                     : 'default',
               }}
               onPointerDown={handlePointerDown}
@@ -1106,7 +1110,7 @@ export default function EditPDF() {
               {/* PDF.js Rendered Canvas */}
               <canvas ref={canvasRef} className="block pointer-events-none w-full h-full" />
 
-              {/* Freehand SVG Layer for drawing strokes */}
+              {/* Freehand SVG Layer */}
               <svg
                 className="absolute inset-0 w-full h-full pointer-events-none"
                 style={{ width: pageDimensions.width * scale, height: pageDimensions.height * scale }}
@@ -1148,36 +1152,43 @@ export default function EditPDF() {
                 )}
               </svg>
 
-              {/* Interactive Extracted Text Layer for editing existing text */}
-              {(activeTool === 'editText' || activeTool === 'select') &&
-                extractedSpans.map((span) => (
-                  <div
-                    key={span.id}
-                    data-interactive="true"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEditExistingSpan(span)
-                    }}
-                    className={`absolute rounded transition-all cursor-pointer z-10 group ${
-                      activeTool === 'editText'
-                        ? 'border border-dashed border-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/30 hover:border-indigo-600'
-                        : 'hover:border hover:border-dashed hover:border-indigo-400 hover:bg-indigo-500/15'
-                    }`}
-                    style={{
-                      left: span.x * scale,
-                      top: span.y * scale,
-                      width: span.width * scale,
-                      height: span.height * scale,
-                    }}
-                    title={`Click to edit: "${span.text}"`}
-                  >
-                    <div className="hidden group-hover:flex items-center gap-1 absolute -top-5 left-0 bg-indigo-700 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm pointer-events-none whitespace-nowrap z-30 font-medium">
-                      ✏️ Edit text
+              {/* Extracted Interactive Text Layer (Click any original text to edit) */}
+              {activeTool === 'select' &&
+                extractedSpans.map((span) => {
+                  const isHovered = hoveredSpanId === span.id
+                  return (
+                    <div
+                      key={span.id}
+                      data-interactive="true"
+                      onMouseEnter={() => setHoveredSpanId(span.id)}
+                      onMouseLeave={() => setHoveredSpanId(null)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditExistingSpan(span)
+                      }}
+                      className={`absolute rounded transition-all cursor-pointer z-10 group ${
+                        isHovered
+                          ? 'border border-dashed border-indigo-400 bg-indigo-500/15'
+                          : 'border border-transparent'
+                      }`}
+                      style={{
+                        left: span.x * scale,
+                        top: span.y * scale,
+                        width: span.width * scale,
+                        height: span.height * scale,
+                      }}
+                      title="Click to edit this text"
+                    >
+                      {isHovered && (
+                        <div className="absolute -top-5 left-0 bg-indigo-700 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm pointer-events-none whitespace-nowrap z-30 font-medium">
+                          ✏️ Click to edit
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
 
-              {/* Interactive Annotations Overlay */}
+              {/* Placed Annotations Layer */}
               {pageAnnotations.map((item) => {
                 const isSelected = item.id === selectedId
 
@@ -1205,12 +1216,11 @@ export default function EditPDF() {
                             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                             onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                             onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
-                            className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
-                            title="Delete this box"
+                            className="absolute -top-3 -right-3 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                            title="Delete box"
                           >
                             ✕
                           </button>
-                          {/* Resize handle */}
                           <div
                             onPointerDown={(e) => startDrag(item.id, e, true, 'se')}
                             className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-indigo-600 rounded-xs cursor-nwse-resize z-20"
@@ -1237,6 +1247,7 @@ export default function EditPDF() {
                       className={`group inline-block ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50/40 rounded px-1' : 'hover:ring-1 hover:ring-indigo-300 rounded px-1'}`}
                     >
                       <input
+                        ref={isSelected ? activeInputRef : undefined}
                         type="text"
                         value={item.text}
                         onChange={(e) => {
@@ -1254,8 +1265,8 @@ export default function EditPDF() {
                           border: 'none',
                           padding: 0,
                           margin: 0,
-                          minWidth: '50px',
-                          width: `${Math.max(50, item.text.length * item.fontSize * scale * 0.65)}px`,
+                          minWidth: '30px',
+                          width: `${Math.max(30, item.text.length * item.fontSize * scale * 0.65)}px`,
                         }}
                       />
                       {isSelected && (
@@ -1264,8 +1275,8 @@ export default function EditPDF() {
                           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                           onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                           onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
-                          className="absolute -top-3.5 -right-3.5 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
-                          title="Delete this text"
+                          className="absolute -top-3 -right-3 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                          title="Delete text"
                         >
                           ✕
                         </button>
@@ -1298,8 +1309,8 @@ export default function EditPDF() {
                             onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                             onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                             onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
-                            className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
-                            title="Delete this image"
+                            className="absolute -top-3 -right-3 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                            title="Delete image"
                           >
                             ✕
                           </button>
@@ -1318,21 +1329,21 @@ export default function EditPDF() {
             </div>
           </div>
 
-          {/* Quick Toolbar Help Footer */}
-          <div className="flex items-center justify-between text-xs text-slate-500 px-2">
-            <div className="flex items-center gap-4">
-              <span>💡 <strong>Tip:</strong> Click on any placed text or box to edit or drag it.</span>
+          {/* Quick Help & Document Status Footer */}
+          <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 px-2 gap-2">
+            <div className="flex items-center gap-3">
+              <span>💡 <strong>Tip:</strong> Hover and click any text directly on the document to edit it.</span>
               {annotations.length > 0 && (
-                <span className="text-indigo-600 font-medium">
-                  {annotations.length} annotation{annotations.length !== 1 ? 's' : ''} on this document
+                <span className="text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">
+                  {annotations.length} change{annotations.length !== 1 ? 's' : ''} made
                 </span>
               )}
             </div>
             <button
               onClick={handleReset}
-              className="text-slate-400 hover:text-red-500 underline"
+              className="text-slate-400 hover:text-red-500 font-medium transition-colors"
             >
-              Upload a different PDF
+              Upload another PDF
             </button>
           </div>
         </div>
