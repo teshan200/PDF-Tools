@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://teshan.click/sitemap.xml
+Sitemap: https://pdftools.teshan.click/sitemap.xml
