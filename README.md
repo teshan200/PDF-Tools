@@ -58,6 +58,7 @@ Create a `.env` file in the root directory:
 ```env
 ILOVEPDF_PUBLIC_KEY=your_public_key_here
 ILOVEPDF_SECRET_KEY=your_secret_key_here
+VITE_GA_MEASUREMENT_ID=your_ga_measurement_id_here
 ```
 
 *(Refer to `.env.example` for the template)*
@@ -83,6 +84,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 4. Configure environment variables in Netlify site settings:
    - `ILOVEPDF_PUBLIC_KEY`
    - `ILOVEPDF_SECRET_KEY`
+   - `VITE_GA_MEASUREMENT_ID` *(optional Google Analytics ID)*
 5. Deploy! 🎉
 
 ---

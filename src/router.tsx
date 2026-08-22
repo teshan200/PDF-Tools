@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { trackPageView } from './analytics'
 
 interface RouterContextType {
   path: string
@@ -17,13 +18,6 @@ function getHashPath(): string {
   return hash || '/'
 }
 
-declare global {
-  interface Window {
-    gtag?: (...args: any[]) => void
-    dataLayer?: any[]
-  }
-}
-
 export function RouterProvider({ children }: { children: React.ReactNode }) {
   const [path, setPath] = useState<string>(getHashPath)
 
@@ -36,13 +30,7 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
   // Send page_view event to Google Analytics on route/tool changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'page_view', {
-          page_title: document.title,
-          page_location: window.location.href,
-          page_path: path,
-        })
-      }
+      trackPageView(path, document.title)
     }, 100)
     return () => clearTimeout(timer)
   }, [path])
