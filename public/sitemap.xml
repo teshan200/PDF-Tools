@@ -1,53 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://pdftools.teshan.click/</loc>
+    <loc>https://asypdftools.xyz/</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/merge</loc>
+    <loc>https://asypdftools.xyz/#/edit</loc>
+    <lastmod>2026-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://asypdftools.xyz/#/merge</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/split</loc>
+    <loc>https://asypdftools.xyz/#/split</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/compress</loc>
+    <loc>https://asypdftools.xyz/#/compress</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/word</loc>
+    <loc>https://asypdftools.xyz/#/word</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/jpg</loc>
+    <loc>https://asypdftools.xyz/#/jpg</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/rotate</loc>
+    <loc>https://asypdftools.xyz/#/rotate</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/protect</loc>
+    <loc>https://asypdftools.xyz/#/protect</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pdftools.teshan.click/#/unlock</loc>
+    <loc>https://asypdftools.xyz/#/unlock</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://pdftools.teshan.click/#/edit</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
   </url>
 </urlset>

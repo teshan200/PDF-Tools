@@ -39,7 +39,7 @@ const TOOLS = [
   {
     path: '/edit',
     label: 'Edit PDF',
-    description: 'Add text annotations, labels, and notes to any page of your PDF.',
+    description: 'Click existing text to edit, erase with whiteout, add images & draw directly.',
     gradient: 'from-indigo-500 to-indigo-700',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +142,7 @@ export default function Home() {
   const { navigate } = useRouter()
 
   useEffect(() => {
-    document.title = 'PDF Tools — Merge, Split, Compress & Convert PDF Free'
+    document.title = 'PDF Tools — Free Online PDF Editor, Converter & Utilities | asypdftools.xyz'
   }, [])
 
   return (

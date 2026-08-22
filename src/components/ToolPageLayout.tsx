@@ -68,7 +68,7 @@ export default function ToolPageLayout({
   const c = COLOR_MAP[color] ?? COLOR_MAP.blue
 
   useEffect(() => {
-    document.title = `${title} — Free Online PDF Tool | PDF Tools`
+    document.title = `${title} — Free Online PDF Tool | asypdftools.xyz`
   }, [title])
 
   return (

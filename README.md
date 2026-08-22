@@ -2,7 +2,7 @@
 
 A fast, modern, and free full-stack PDF utility web application with **9 essential tools** — built with React 19, Vite, Tailwind CSS v4, PDF.js, pdf-lib, and Netlify Serverless Functions.
 
-Live App: [https://pdftools.teshan.click/](https://pdftools.teshan.click/)
+Live App: [https://asypdftools.xyz/](https://asypdftools.xyz/)
 
 Developed by **Teshan Pamodya** • [Website](https://teshan.click) • [GitHub](https://github.com/teshan200/)
 
