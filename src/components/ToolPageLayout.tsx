@@ -42,6 +42,11 @@ const COLOR_MAP: Record<string, { hero: string; iconBg: string; back: string }> 
     iconBg: 'bg-white/15',
     back: 'text-teal-100 hover:text-white',
   },
+  indigo: {
+    hero: 'from-indigo-600 via-indigo-700 to-indigo-900',
+    iconBg: 'bg-white/15',
+    back: 'text-indigo-100 hover:text-white',
+  },
 }
 
 interface ToolPageLayoutProps {

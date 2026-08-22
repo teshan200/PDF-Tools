@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { path: '/merge', label: 'Merge PDF' },
   { path: '/split', label: 'Split PDF' },
   { path: '/compress', label: 'Compress' },
+  { path: '/edit', label: 'Edit PDF' },
   { path: '/word', label: 'PDF to Word' },
   { path: '/jpg', label: 'PDF to JPG' },
   { path: '/rotate', label: 'Rotate PDF' },

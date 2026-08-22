@@ -10,4 +10,4 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@ilovepdf/ilovepdf-nodejs", "busboy"]
+  external_node_modules = ["@ilovepdf/ilovepdf-nodejs", "@ilovepdf/ilovepdf-js-core", "busboy"]

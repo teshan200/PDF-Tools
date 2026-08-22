@@ -9,6 +9,7 @@ import PDFtoJPG from './pages/PDFtoJPG'
 import RotatePDF from './pages/RotatePDF'
 import ProtectPDF from './pages/ProtectPDF'
 import UnlockPDF from './pages/UnlockPDF'
+import EditPDF from './pages/EditPDF'
 
 const ROUTES: Record<string, React.ComponentType> = {
   '/': Home,
@@ -20,6 +21,7 @@ const ROUTES: Record<string, React.ComponentType> = {
   '/rotate': RotatePDF,
   '/protect': ProtectPDF,
   '/unlock': UnlockPDF,
+  '/edit': EditPDF,
 }
 
 function Routes() {
