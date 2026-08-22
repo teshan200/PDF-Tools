@@ -11,7 +11,17 @@ import ErrorMessage from '../components/ErrorMessage'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type ToolMode = 'select' | 'text' | 'whiteout' | 'draw' | 'image'
+type ToolMode = 'select' | 'editText' | 'text' | 'whiteout' | 'draw' | 'image'
+
+interface ExtractedSpan {
+  id: string
+  text: string
+  x: number
+  y: number
+  width: number
+  height: number
+  fontSize: number
+}
 
 interface BaseAnnotation {
   id: string
@@ -95,9 +105,10 @@ export default function EditPDF() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [downloadName, setDownloadName] = useState('edited.pdf')
 
-  // Annotations
+  // Annotations & Extracted text
   const [annotations, setAnnotations] = useState<AnnotationItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [extractedSpans, setExtractedSpans] = useState<ExtractedSpan[]>([])
 
   // Current Tool Styling Options
   const [textColor, setTextColor] = useState('#000000')
@@ -141,6 +152,7 @@ export default function EditPDF() {
       setNumPages(0)
       setAnnotations([])
       setSelectedId(null)
+      setExtractedSpans([])
       setDownloadUrl(null)
       return
     }
@@ -173,18 +185,44 @@ export default function EditPDF() {
     return () => { cancelled = true }
   }, [files])
 
-  // ─── 2. Render Page to Canvas ───────────────────────────────────────────────
+  // ─── 2. Render Page to Canvas & Extract Text ────────────────────────────────
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return
     let renderTask: any = null
     let cancelled = false
 
-    pdfDoc.getPage(currentPage).then((page: any) => {
+    pdfDoc.getPage(currentPage).then(async (page: any) => {
       if (cancelled) return
       const unscaledViewport = page.getViewport({ scale: 1.0 })
       setPageDimensions({ width: unscaledViewport.width, height: unscaledViewport.height })
 
-      // Auto-fit scale if container is available and not customized yet
+      // Extract text items from the current page
+      try {
+        const textContent = await page.getTextContent()
+        const spans: ExtractedSpan[] = []
+        textContent.items.forEach((item: any, idx: number) => {
+          if (!item.str || !item.str.trim()) return
+          const tx = item.transform[4]
+          const ty = item.transform[5]
+          const h = item.height || Math.abs(item.transform[3]) || 14
+          const w = item.width || (item.str.length * h * 0.55)
+          const y = unscaledViewport.height - ty - h * 0.95
+          spans.push({
+            id: `span_${currentPage}_${idx}`,
+            text: item.str,
+            x: Math.round(tx),
+            y: Math.round(y),
+            width: Math.max(10, Math.round(w)),
+            height: Math.max(10, Math.round(h)),
+            fontSize: Math.max(8, Math.round(h)),
+          })
+        })
+        if (!cancelled) setExtractedSpans(spans)
+      } catch (err) {
+        console.error('Failed to extract text content:', err)
+      }
+
+      // Render canvas
       const viewport = page.getViewport({ scale })
       const canvas = canvasRef.current
       if (!canvas) return
@@ -402,7 +440,42 @@ export default function EditPDF() {
     e.target.value = ''
   }
 
-  // ─── 6. Undo & Delete ───────────────────────────────────────────────────────
+  // ─── 6. Edit Existing Text Span ─────────────────────────────────────────────
+  const handleEditExistingSpan = (span: ExtractedSpan) => {
+    // 1. Create whiteout rectangle over the original text
+    const whiteoutBox: WhiteoutItem = {
+      id: 'box_' + Date.now(),
+      type: 'whiteout',
+      page: currentPage,
+      x: Math.max(0, span.x - 2),
+      y: Math.max(0, span.y - 1),
+      width: span.width + 6,
+      height: span.height + 3,
+      color: '#ffffff',
+      opacity: 1.0,
+    }
+
+    // 2. Create an editable text annotation right on top
+    const newText: TextItem = {
+      id: 'text_' + (Date.now() + 1),
+      type: 'text',
+      page: currentPage,
+      x: span.x,
+      y: span.y,
+      text: span.text,
+      fontSize: span.fontSize,
+      fontFamily: 'Helvetica',
+      isBold: false,
+      isItalic: false,
+      color: '#000000',
+    }
+
+    setAnnotations((prev) => [...prev, whiteoutBox, newText])
+    setSelectedId(newText.id)
+    setActiveTool('select')
+  }
+
+  // ─── 7. Undo & Delete ───────────────────────────────────────────────────────
   const deleteAnnotation = useCallback((id: string) => {
     setAnnotations((prev) => prev.filter((a) => a.id !== id))
     setSelectedId((curr) => (curr === id ? null : curr))
@@ -629,7 +702,7 @@ export default function EditPDF() {
           {/* Top Control Bar */}
           <div className="bg-white border border-slate-200 rounded-2xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
             {/* Tool Selection Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl flex-wrap">
               <button
                 onClick={() => { setActiveTool('select'); setSelectedId(null) }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -644,14 +717,27 @@ export default function EditPDF() {
               </button>
 
               <button
+                onClick={() => { setActiveTool('editText'); setSelectedId(null) }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTool === 'editText' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100'
+                }`}
+                title="Click any text currently in the PDF to edit it directly"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Text in PDF
+              </button>
+
+              <button
                 onClick={() => setActiveTool('text')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTool === 'text' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
-                title="Click anywhere to add text"
+                title="Click anywhere to add new text"
               >
                 <span className="font-serif font-bold text-sm leading-none">T</span>
-                Text
+                Add Text
               </button>
 
               <button
@@ -776,6 +862,18 @@ export default function EditPDF() {
           </div>
 
           {/* Dynamic Secondary Options Bar */}
+          {activeTool === 'editText' && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs text-indigo-950 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-base">✏️</span>
+                <span><strong>Click any text below</strong> to edit it directly. A whiteout layer will cover the original text automatically.</span>
+              </div>
+              <span className="text-indigo-700 bg-white font-semibold px-2.5 py-1 rounded-lg border border-indigo-200 text-[11px] shrink-0">
+                {extractedSpans.length} text items ready
+              </span>
+            </div>
+          )}
+
           {(activeTool === 'text' || (selectedItem && selectedItem.type === 'text')) && (
             <div className="bg-indigo-50/80 border border-indigo-100 rounded-xl px-4 py-2 flex items-center gap-4 flex-wrap text-xs">
               <span className="font-bold text-indigo-900">Text Options:</span>
@@ -1049,6 +1147,35 @@ export default function EditPDF() {
                   />
                 )}
               </svg>
+
+              {/* Interactive Extracted Text Layer for editing existing text */}
+              {(activeTool === 'editText' || activeTool === 'select') &&
+                extractedSpans.map((span) => (
+                  <div
+                    key={span.id}
+                    data-interactive="true"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEditExistingSpan(span)
+                    }}
+                    className={`absolute rounded transition-all cursor-pointer z-10 group ${
+                      activeTool === 'editText'
+                        ? 'border border-dashed border-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/30 hover:border-indigo-600'
+                        : 'hover:border hover:border-dashed hover:border-indigo-400 hover:bg-indigo-500/15'
+                    }`}
+                    style={{
+                      left: span.x * scale,
+                      top: span.y * scale,
+                      width: span.width * scale,
+                      height: span.height * scale,
+                    }}
+                    title={`Click to edit: "${span.text}"`}
+                  >
+                    <div className="hidden group-hover:flex items-center gap-1 absolute -top-5 left-0 bg-indigo-700 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm pointer-events-none whitespace-nowrap z-30 font-medium">
+                      ✏️ Edit text
+                    </div>
+                  </div>
+                ))}
 
               {/* Interactive Annotations Overlay */}
               {pageAnnotations.map((item) => {
