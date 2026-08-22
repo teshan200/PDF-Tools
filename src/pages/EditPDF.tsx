@@ -403,16 +403,35 @@ export default function EditPDF() {
   }
 
   // ─── 6. Undo & Delete ───────────────────────────────────────────────────────
-  const deleteSelected = () => {
+  const deleteAnnotation = useCallback((id: string) => {
+    setAnnotations((prev) => prev.filter((a) => a.id !== id))
+    setSelectedId((curr) => (curr === id ? null : curr))
+  }, [])
+
+  const deleteSelected = useCallback(() => {
     if (!selectedId) return
-    setAnnotations((prev) => prev.filter((a) => a.id !== selectedId))
-    setSelectedId(null)
-  }
+    deleteAnnotation(selectedId)
+  }, [selectedId, deleteAnnotation])
 
   const undoLast = () => {
     setAnnotations((prev) => prev.slice(0, -1))
     setSelectedId(null)
   }
+
+  // Keyboard shortcut: Delete or Backspace key to remove selected item
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
+        // Do not trigger if typing in an active text input or textarea
+        const tag = (document.activeElement?.tagName || '').toLowerCase()
+        if (tag === 'input' || tag === 'textarea') return
+        e.preventDefault()
+        deleteSelected()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedId, deleteSelected])
 
   // ─── 7. Export Edited PDF with pdf-lib ──────────────────────────────────────
   const handleExport = async () => {
@@ -848,6 +867,17 @@ export default function EditPDF() {
                   />
                 ))}
               </div>
+              {selectedItem && (
+                <button
+                  onClick={deleteSelected}
+                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded border border-red-200 font-semibold transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Item
+                </button>
+              )}
             </div>
           )}
 
@@ -892,6 +922,18 @@ export default function EditPDF() {
                   🟨 Yellow Highlighter
                 </button>
               </div>
+
+              {selectedItem && (
+                <button
+                  onClick={deleteSelected}
+                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded border border-red-200 font-semibold transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Item
+                </button>
+              )}
             </div>
           )}
 
@@ -1028,16 +1070,19 @@ export default function EditPDF() {
                       {isSelected && (
                         <>
                           <button
-                            onClick={(e) => { e.stopPropagation(); deleteSelected() }}
-                            className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow hover:bg-red-700"
-                            title="Delete"
+                            type="button"
+                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+                            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
+                            className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                            title="Delete this box"
                           >
                             ✕
                           </button>
                           {/* Resize handle */}
                           <div
                             onPointerDown={(e) => startDrag(item.id, e, true, 'se')}
-                            className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-indigo-600 rounded-xs cursor-nwse-resize"
+                            className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-indigo-600 rounded-xs cursor-nwse-resize z-20"
                           />
                         </>
                       )}
@@ -1084,9 +1129,12 @@ export default function EditPDF() {
                       />
                       {isSelected && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); deleteSelected() }}
-                          className="absolute -top-3.5 -right-3.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow hover:bg-red-700"
-                          title="Delete"
+                          type="button"
+                          onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+                          onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
+                          className="absolute -top-3.5 -right-3.5 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                          title="Delete this text"
                         >
                           ✕
                         </button>
@@ -1115,15 +1163,18 @@ export default function EditPDF() {
                       {isSelected && (
                         <>
                           <button
-                            onClick={(e) => { e.stopPropagation(); deleteSelected() }}
-                            className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow hover:bg-red-700"
-                            title="Delete"
+                            type="button"
+                            onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+                            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteAnnotation(item.id) }}
+                            className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md cursor-pointer z-30 transition-transform hover:scale-110"
+                            title="Delete this image"
                           >
                             ✕
                           </button>
                           <div
                             onPointerDown={(e) => startDrag(item.id, e, true, 'se')}
-                            className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-indigo-600 rounded-xs cursor-nwse-resize"
+                            className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-indigo-600 rounded-xs cursor-nwse-resize z-20"
                           />
                         </>
                       )}
