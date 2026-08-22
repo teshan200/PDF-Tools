@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
+import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import ToolPageLayout from '../components/ToolPageLayout'
 import DropZone from '../components/DropZone'
 import Spinner from '../components/Spinner'
@@ -7,9 +8,8 @@ import ErrorMessage from '../components/ErrorMessage'
 import DownloadButton from '../components/DownloadButton'
 import { useToolProcessor } from '../hooks/useToolProcessor'
 
-// Load worker from unpkg CDN — avoids Vite worker bundling complexity
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  `https://unpkg.com/pdfjs-dist@${(pdfjsLib as any).version}/build/pdf.worker.min.mjs`
+// Configure worker to use locally bundled worker file
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
 
 // Render scale: 1 PDF pt = SCALE canvas pixels
 const SCALE = 1.4
@@ -216,7 +216,7 @@ function TextOverlay({
         className={[
           'px-1.5 py-0.5 rounded transition-all max-w-[400px] break-words',
           isSelected
-            ? 'ring-2 ring-indigo-500 bg-indigo-50/60 shadow-lg shadow-indigo-200/50'
+            ? 'ring-2 ring-indigo-500 bg-indigo-50/70 shadow-lg shadow-indigo-200/50'
             : 'ring-1 ring-dashed ring-slate-400/70 hover:ring-indigo-400 hover:bg-indigo-50/30',
         ].join(' ')}
         style={{
@@ -260,9 +260,11 @@ export default function EditPDF() {
 
   // PDF.js state
   const [pdfDoc, setPdfDoc] = useState<any>(null)
+  const [loadingDoc, setLoadingDoc] = useState(false)
   const [numPages, setNumPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [rendering, setRendering] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Text elements
   const [elements, setElements] = useState<TextEl[]>([])
@@ -275,38 +277,86 @@ export default function EditPDF() {
   } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // Load PDF
+  // Load PDF using ArrayBuffer
   useEffect(() => {
     const file = files[0]
-    if (!file) { setPdfDoc(null); setNumPages(0); setElements([]); setSelectedId(null); return }
-    const url = URL.createObjectURL(file)
-    pdfjsLib.getDocument(url).promise.then((doc: any) => {
-      setPdfDoc(doc)
-      setNumPages(doc.numPages)
-      setCurrentPage(1)
+    if (!file) {
+      setPdfDoc(null)
+      setNumPages(0)
       setElements([])
       setSelectedId(null)
-    })
-    return () => URL.revokeObjectURL(url)
+      setLoadError(null)
+      return
+    }
+
+    let cancelled = false
+    setLoadingDoc(true)
+    setLoadError(null)
+
+    file.arrayBuffer()
+      .then(buffer => {
+        if (cancelled) return
+        return pdfjsLib
+          .getDocument({ data: new Uint8Array(buffer) })
+          .promise
+      })
+      .then((doc: any) => {
+        if (cancelled || !doc) return
+        setPdfDoc(doc)
+        setNumPages(doc.numPages)
+        setCurrentPage(1)
+        setElements([])
+        setSelectedId(null)
+        setLoadingDoc(false)
+      })
+      .catch((err: any) => {
+        if (cancelled) return
+        console.error('Failed to load PDF document:', err)
+        setLoadError(err?.message || 'Could not parse this PDF file.')
+        setLoadingDoc(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [files])
 
   // Render current page to canvas
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return
-    let cancelled = false
+    let renderTask: any = null
     setRendering(true)
+
     pdfDoc.getPage(currentPage).then((page: any) => {
-      if (cancelled) return
       const viewport = page.getViewport({ scale: SCALE })
-      const canvas = canvasRef.current!
-      const ctx = canvas.getContext('2d')!
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
       canvas.width  = viewport.width
       canvas.height = viewport.height
-      page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-        if (!cancelled) setRendering(false)
-      })
+
+      renderTask = page.render({ canvasContext: ctx, viewport })
+      renderTask.promise
+        .then(() => {
+          setRendering(false)
+        })
+        .catch((err: any) => {
+          if (err?.name !== 'RenderingCancelledException') {
+            console.error('Canvas render error:', err)
+          }
+          setRendering(false)
+        })
+    }).catch((err: any) => {
+      console.error('Get page error:', err)
+      setRendering(false)
     })
-    return () => { cancelled = true }
+
+    return () => {
+      if (renderTask) {
+        renderTask.cancel()
+      }
+    }
   }, [pdfDoc, currentPage])
 
   // Auto-focus textarea when a new element is selected
@@ -318,7 +368,6 @@ export default function EditPDF() {
 
   // Click on canvas → add new text element
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Ignore if this was the end of a drag
     if (dragRef.current) return
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect()
     const x = (e.clientX - rect.left) / SCALE
@@ -381,7 +430,7 @@ export default function EditPDF() {
       h: Math.max(40, el.fontSize * 2),
       fontSize: el.fontSize,
       fontFamily: el.fontFamily,
-      fontStyle: el.fontStyle,    // function handles 'normal' → omit
+      fontStyle: el.fontStyle,
       opacity: el.opacity,
       underline: el.underline,
     }))
@@ -404,6 +453,7 @@ export default function EditPDF() {
     setPdfDoc(null)
     setElements([])
     setSelectedId(null)
+    setLoadError(null)
   }
 
   return (
@@ -417,10 +467,13 @@ export default function EditPDF() {
         <DownloadButton url={downloadUrl} filename={downloadName} onReset={handleReset} label="Download Edited PDF" />
       ) : isLoading ? (
         <Spinner message={progress} />
+      ) : loadingDoc ? (
+        <Spinner message="Rendering PDF preview..." />
       ) : !pdfDoc ? (
         /* ── Step 1: Upload ── */
         <div className="space-y-4">
           <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload the PDF you want to add text to" />
+          {loadError && <ErrorMessage message={loadError} onRetry={handleReset} />}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex gap-3 items-start">
             <svg className="w-5 h-5 text-indigo-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -428,7 +481,7 @@ export default function EditPDF() {
             <div className="text-sm text-indigo-800 space-y-1">
               <p className="font-semibold">How it works</p>
               <ul className="list-disc list-inside space-y-0.5 text-indigo-700">
-                <li>Upload your PDF — pages are rendered as a live preview</li>
+                <li>Upload your PDF — pages are rendered as an interactive preview</li>
                 <li>Click anywhere on the page to drop a text box</li>
                 <li>Drag text boxes to reposition them</li>
                 <li>Edit font, size &amp; style in the panel on the right</li>
@@ -490,12 +543,11 @@ export default function EditPDF() {
           {/* ── Editor split ── */}
           <div className="flex flex-col lg:flex-row gap-4 items-start">
             {/* Canvas */}
-            <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-hidden w-full">
               <div
-                className="relative border border-slate-200 rounded-xl overflow-auto bg-slate-100 shadow-inner"
-                style={{ maxHeight: '72vh', cursor: 'crosshair' }}
+                className="relative border border-slate-200 rounded-xl overflow-auto bg-slate-100 shadow-inner flex justify-center p-4"
+                style={{ maxHeight: '75vh', cursor: 'crosshair' }}
                 onClick={e => {
-                  // Only fire if click was directly on this container (not on an overlay)
                   if ((e.target as HTMLElement).closest('[data-text-overlay]')) return
                   handleCanvasClick(e)
                 }}
@@ -507,7 +559,7 @@ export default function EditPDF() {
                 )}
 
                 {/* The canvas + overlay container */}
-                <div className="relative inline-block">
+                <div className="relative shadow-lg bg-white rounded">
                   <canvas ref={canvasRef} className="block select-none" />
 
                   {/* Text overlays for current page */}
@@ -527,8 +579,8 @@ export default function EditPDF() {
 
                 {/* Hint overlay */}
                 <div className="absolute bottom-3 left-3 right-3 flex justify-center pointer-events-none">
-                  <span className="text-[11px] text-slate-500 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow border border-slate-200 select-none">
-                    ✦ Click anywhere to add text • Drag text to move
+                  <span className="text-[11px] text-slate-600 bg-white/90 backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow border border-slate-200 select-none font-medium">
+                    ✦ Click anywhere on the PDF to place text • Drag to move
                   </span>
                 </div>
               </div>
