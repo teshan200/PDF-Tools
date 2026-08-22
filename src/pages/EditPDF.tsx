@@ -435,12 +435,15 @@ export default function EditPDF() {
 
   // ─── 7. Export Edited PDF with pdf-lib ──────────────────────────────────────
   const handleExport = async () => {
-    if (!pdfBytes) return
+    const file = files[0]
+    if (!file) return
     try {
       setIsProcessing(true)
       setProgressMsg('Rendering your changes into the PDF...')
 
-      const pdfDocLib = await PDFDocument.load(pdfBytes)
+      // Always read a fresh ArrayBuffer from the file to prevent detached buffer errors
+      const freshBytes = await file.arrayBuffer()
+      const pdfDocLib = await PDFDocument.load(freshBytes)
       const pages = pdfDocLib.getPages()
 
       // Embed standard fonts
@@ -486,10 +489,11 @@ export default function EditPDF() {
             })
           } else if (item.type === 'image') {
             let embeddedImg: any
+            const imgBytes = item.fileBytes.slice(0)
             if (item.isPng) {
-              embeddedImg = await pdfDocLib.embedPng(item.fileBytes)
+              embeddedImg = await pdfDocLib.embedPng(imgBytes)
             } else {
-              embeddedImg = await pdfDocLib.embedJpg(item.fileBytes)
+              embeddedImg = await pdfDocLib.embedJpg(imgBytes)
             }
             const pdfY = pageHeight - (item.y + item.height)
             page.drawImage(embeddedImg, {
