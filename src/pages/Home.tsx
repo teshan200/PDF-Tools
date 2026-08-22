@@ -142,7 +142,7 @@ export default function Home() {
   const { navigate } = useRouter()
 
   useEffect(() => {
-    document.title = 'PDF Tools — Free Online PDF Editor, Converter & Utilities | asypdftools.xyz'
+    document.title = 'Easy PDF Tools — Free Online PDF Editor, Converter & Utilities | easypdftools.xyz'
   }, [])
 
   return (
