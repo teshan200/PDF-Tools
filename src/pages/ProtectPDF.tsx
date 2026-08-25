@@ -20,7 +20,7 @@ export default function ProtectPDF() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [encryption, setEncryption] = useState<Encryption>('128')
+  const [encryption, setEncryption] = useState<Encryption>('256')
 
   const {
     files,
@@ -44,7 +44,7 @@ export default function ProtectPDF() {
   return (
     <ToolPageLayout
       title="Protect PDF"
-      description="Add password protection to your PDF files."
+      description="Add military-grade AES password encryption to your PDF files."
       color="rose"
       icon={<LockIcon />}
     >
@@ -65,22 +65,22 @@ export default function ProtectPDF() {
             hint="Select a PDF to protect with a password"
           />
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
             {/* Password input */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-800">Password</label>
+              <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter a strong password"
-                  className="w-full px-4 py-2.5 pr-12 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                  placeholder="Enter password"
+                  className="w-full px-4 py-2.5 pr-12 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -99,27 +99,27 @@ export default function ProtectPDF() {
 
             {/* Confirm password */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-800">Confirm Password</label>
+              <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Confirm Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter your password"
                 className={[
-                  'w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-colors',
+                  'w-full px-4 py-2.5 bg-white dark:bg-slate-800 border rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-colors',
                   mismatch
-                    ? 'border-red-400 focus:ring-red-400 bg-red-50'
-                    : 'border-slate-300 focus:ring-rose-500 focus:border-rose-500',
+                    ? 'border-red-400 focus:ring-red-400 bg-red-50 dark:bg-red-950/30'
+                    : 'border-slate-300 dark:border-slate-700 focus:ring-blue-500',
                 ].join(' ')}
               />
               {mismatch && (
-                <p className="text-xs text-red-600">Passwords do not match</p>
+                <p className="text-xs text-red-600 dark:text-red-400">Passwords do not match</p>
               )}
             </div>
 
             {/* Encryption level */}
             <div className="space-y-2.5">
-              <p className="text-sm font-semibold text-slate-800">Encryption Strength</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Encryption Strength</p>
               <div className="flex gap-3">
                 {(['128', '256'] as const).map((bit) => (
                   <button
@@ -127,17 +127,17 @@ export default function ProtectPDF() {
                     type="button"
                     onClick={() => setEncryption(bit)}
                     className={[
-                      'flex-1 flex flex-col items-center gap-1 py-3 px-3 rounded-xl border-2 transition-all',
+                      'flex-1 flex flex-col items-center gap-1 py-3 px-3 rounded-xl border-2 transition-all cursor-pointer',
                       encryption === bit
-                        ? 'border-rose-500 bg-rose-50'
-                        : 'border-slate-200 hover:border-slate-300',
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700',
                     ].join(' ')}
                   >
-                    <span className={`text-base font-bold ${encryption === bit ? 'text-rose-700' : 'text-slate-700'}`}>
+                    <span className={`text-base font-bold ${encryption === bit ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>
                       {bit}-bit AES
                     </span>
-                    <span className="text-xs text-slate-500">
-                      {bit === '128' ? 'Standard security' : 'Maximum security'}
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {bit === '128' ? 'Standard security' : 'Maximum 256-bit security'}
                     </span>
                   </button>
                 ))}
@@ -151,7 +151,7 @@ export default function ProtectPDF() {
             type="button"
             onClick={handleProcess}
             disabled={!canProcess}
-            className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors shadow-sm"
+            className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 active:opacity-90 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-sm cursor-pointer text-sm"
           >
             {!files.length
               ? 'Upload a PDF first'
@@ -159,12 +159,8 @@ export default function ProtectPDF() {
                 ? 'Enter a password'
                 : mismatch
                   ? 'Passwords must match'
-                  : 'Protect PDF'}
+                  : 'Protect PDF with AES'}
           </button>
-
-          <p className="text-xs text-slate-400 text-center">
-            ⚠️ Remember your password — there is no way to recover it if lost.
-          </p>
         </div>
       )}
     </ToolPageLayout>

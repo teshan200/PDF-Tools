@@ -37,7 +37,7 @@ export default function UnlockPDF() {
   return (
     <ToolPageLayout
       title="Unlock PDF"
-      description="Remove password protection from your PDF files."
+      description="Remove password protection and printing/editing restrictions from PDF files."
       color="teal"
       icon={<UnlockIcon />}
     >
@@ -59,9 +59,9 @@ export default function UnlockPDF() {
           />
 
           {/* Password input */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 PDF Password
               </label>
               <div className="relative">
@@ -71,12 +71,12 @@ export default function UnlockPDF() {
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && files.length && password && handleProcess()}
                   placeholder="Enter the PDF password"
-                  className="w-full px-4 py-2.5 pr-12 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full px-4 py-2.5 pr-12 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,19 +91,15 @@ export default function UnlockPDF() {
                   </svg>
                 </button>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 Leave blank if the PDF only has owner restrictions (no open password).
               </p>
             </div>
           </div>
 
-          {/* Security note */}
-          <div className="bg-teal-50 border border-teal-100 rounded-xl px-4 py-3 flex gap-3 items-start">
-            <svg className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <p className="text-xs text-teal-700">
-              Only use this tool on PDFs you own or have permission to unlock. Your password is sent securely over HTTPS.
+          <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Only use this tool on PDF documents you own or have authorization to unlock. Files are processed in ephemeral memory and auto-deleted immediately.
             </p>
           </div>
 
@@ -113,7 +109,7 @@ export default function UnlockPDF() {
             type="button"
             onClick={handleProcess}
             disabled={!files.length}
-            className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors shadow-sm"
+            className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 active:opacity-90 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-sm cursor-pointer text-sm"
           >
             {!files.length ? 'Upload a PDF first' : 'Remove Password Protection'}
           </button>
