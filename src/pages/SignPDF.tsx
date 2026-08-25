@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb } from 'pdf-lib'
 import ToolPageLayout from '../components/ToolPageLayout'
 import DropZone from '../components/DropZone'
 import Spinner from '../components/Spinner'
 import ErrorMessage from '../components/ErrorMessage'
+import { encryptData, decryptData, EncryptedPayload } from '../utils/crypto'
 
 // Configure worker to use locally bundled worker file
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
+
+const STORAGE_KEY = 'easypdf_saved_signatures_v1'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SignatureMode = 'draw' | 'type' | 'upload'
@@ -25,11 +28,20 @@ interface PlacedSignature {
   text?: string
 }
 
-interface SavedSignature {
+interface StoredSignatureRecord {
   id: string
-  dataUrl: string
   label: string
   createdAt: number
+  payload: EncryptedPayload
+}
+
+interface LoadedSignature {
+  id: string
+  label: string
+  createdAt: number
+  hasPin: boolean
+  dataUrl?: string // populated once decrypted
+  isLocked: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -41,7 +53,6 @@ function hexToRgb(hex: string) {
   return rgb(r, g, b)
 }
 
-// Convert dataURL to ArrayBuffer
 async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
   const res = await fetch(dataUrl)
   return res.arrayBuffer()
@@ -66,8 +77,8 @@ export default function SignPDF() {
   const [placedItems, setPlacedItems] = useState<PlacedSignature[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  // Saved Signatures List
-  const [savedSignatures, setSavedSignatures] = useState<SavedSignature[]>([])
+  // Saved Signatures List (AES-256 Encrypted in localStorage)
+  const [savedSignatures, setSavedSignatures] = useState<LoadedSignature[]>([])
 
   // Signature Creation Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -80,7 +91,17 @@ export default function SignPDF() {
   const [typedFontIndex, setTypedFontIndex] = useState(0)
   const [typedColor, setTypedColor] = useState('#000000')
 
-  // Refs
+  // Storage & Encryption Options in Modal
+  const [saveToDevice, setSaveToDevice] = useState(true)
+  const [usePinLock, setUsePinLock] = useState(false)
+  const [creationPin, setCreationPin] = useState('')
+
+  // Unlock PIN Modal
+  const [unlockTarget, setUnlockTarget] = useState<LoadedSignature | null>(null)
+  const [unlockPin, setUnlockPin] = useState('')
+  const [unlockError, setUnlockError] = useState<string | null>(null)
+
+  // Interaction refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const padCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -99,7 +120,51 @@ export default function SignPDF() {
     isResize: boolean
   } | null>(null)
 
-  // ─── 1. Load PDF Document ───────────────────────────────────────────────────
+  // ─── 1. Load Saved Encrypted Signatures from localStorage on Mount ───────────
+  useEffect(() => {
+    async function loadSaved() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (!raw) return
+        const records: StoredSignatureRecord[] = JSON.parse(raw)
+        const loadedList: LoadedSignature[] = []
+
+        for (const rec of records) {
+          if (rec.payload.hasPin) {
+            // Needs user PIN to decrypt
+            loadedList.push({
+              id: rec.id,
+              label: rec.label,
+              createdAt: rec.createdAt,
+              hasPin: true,
+              isLocked: true,
+            })
+          } else {
+            // Auto-decrypt with device AES-256 key
+            try {
+              const dataUrl = await decryptData(rec.payload)
+              loadedList.push({
+                id: rec.id,
+                label: rec.label,
+                createdAt: rec.createdAt,
+                hasPin: false,
+                dataUrl,
+                isLocked: false,
+              })
+            } catch (err) {
+              console.error('Failed to auto-decrypt saved signature:', err)
+            }
+          }
+        }
+        setSavedSignatures(loadedList)
+      } catch (err) {
+        console.error('Failed to parse saved signatures:', err)
+      }
+    }
+    loadSaved()
+  }, [])
+
+  // ─── 2. Load PDF Document ───────────────────────────────────────────────────
   useEffect(() => {
     const file = files[0]
     if (!file) {
@@ -138,7 +203,7 @@ export default function SignPDF() {
     return () => { cancelled = true }
   }, [files])
 
-  // ─── 2. Render Current Page ─────────────────────────────────────────────────
+  // ─── 3. Render Current Page ─────────────────────────────────────────────────
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return
     let renderTask: any = null
@@ -172,7 +237,6 @@ export default function SignPDF() {
     }
   }, [pdfDoc, currentPage, scale])
 
-  // Auto-fit on initial load
   const fitToWidth = useCallback(() => {
     if (!containerRef.current || !pageDimensions.width) return
     const containerWidth = containerRef.current.clientWidth - 64
@@ -180,7 +244,7 @@ export default function SignPDF() {
     setScale(parseFloat(targetScale.toFixed(2)))
   }, [pageDimensions.width])
 
-  // ─── 3. Signature Pad Drawing Logic ─────────────────────────────────────────
+  // ─── 4. Signature Pad Drawing Logic ─────────────────────────────────────────
   const initPad = () => {
     const pad = padCanvasRef.current
     if (!pad) return
@@ -237,21 +301,45 @@ export default function SignPDF() {
     lastPointRef.current = null
   }
 
-  // ─── 4. Save and Place Signature ────────────────────────────────────────────
-  const addSignatureToDocument = (dataUrl: string, label = 'Signature') => {
-    // Also save in tray
-    const newSaved: SavedSignature = {
-      id: 'saved_' + Date.now(),
-      dataUrl,
-      label,
-      createdAt: Date.now(),
-    }
-    setSavedSignatures((prev) => {
-      const exists = prev.some((s) => s.dataUrl === dataUrl)
-      return exists ? prev : [newSaved, ...prev]
-    })
+  // ─── 5. Save & Encrypt Signature ────────────────────────────────────────────
+  const addSignatureToDocument = async (dataUrl: string, label = 'Signature') => {
+    // 1. If user opted to save to device: Encrypt with AES-256 and store in localStorage
+    if (saveToDevice) {
+      try {
+        const pinToUse = usePinLock && creationPin.trim() ? creationPin.trim() : undefined
+        const encryptedPayload = await encryptData(dataUrl, pinToUse)
+        const id = 'sigrec_' + Date.now()
 
-    // Place at center of page
+        const newRecord: StoredSignatureRecord = {
+          id,
+          label,
+          createdAt: Date.now(),
+          payload: encryptedPayload,
+        }
+
+        const raw = localStorage.getItem(STORAGE_KEY)
+        const existing: StoredSignatureRecord[] = raw ? JSON.parse(raw) : []
+        const updated = [newRecord, ...existing]
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+
+        // Update UI state
+        setSavedSignatures((prev) => [
+          {
+            id,
+            label,
+            createdAt: newRecord.createdAt,
+            hasPin: !!pinToUse,
+            dataUrl,
+            isLocked: false,
+          },
+          ...prev,
+        ])
+      } catch (err) {
+        console.error('Failed to encrypt signature:', err)
+      }
+    }
+
+    // 2. Place on current PDF page
     const w = 150
     const h = 60
     const newItem: PlacedSignature = {
@@ -267,6 +355,8 @@ export default function SignPDF() {
     setPlacedItems((prev) => [...prev, newItem])
     setSelectedId(newItem.id)
     setIsModalOpen(false)
+    setCreationPin('')
+    setUsePinLock(false)
   }
 
   const handleSaveDrawnSignature = () => {
@@ -325,7 +415,6 @@ export default function SignPDF() {
           const r = data[i]
           const g = data[i + 1]
           const b = data[i + 2]
-          // If pixel is near-white, make it transparent
           if (r > 215 && g > 215 && b > 215) {
             data[i + 3] = 0
           }
@@ -340,7 +429,71 @@ export default function SignPDF() {
     e.target.value = ''
   }
 
-  // ─── 5. Quick Stamps (Date, Checkmark, Initials) ───────────────────────────
+  // ─── 6. Unlock PIN-Protected Signature ─────────────────────────────────────
+  const handleUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!unlockTarget || !unlockPin.trim()) return
+
+    setUnlockError(null)
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) throw new Error('No storage found')
+      const records: StoredSignatureRecord[] = JSON.parse(raw)
+      const record = records.find((r) => r.id === unlockTarget.id)
+      if (!record) throw new Error('Signature record not found')
+
+      // Decrypt with user PIN
+      const decryptedDataUrl = await decryptData(record.payload, unlockPin.trim())
+
+      // Update state to unlocked
+      setSavedSignatures((prev) =>
+        prev.map((s) =>
+          s.id === unlockTarget.id
+            ? { ...s, dataUrl: decryptedDataUrl, isLocked: false }
+            : s
+        )
+      )
+
+      // Automatically stamp onto document
+      const w = 150
+      const h = 60
+      const newItem: PlacedSignature = {
+        id: 'sig_' + Date.now(),
+        page: currentPage,
+        x: Math.round(pageDimensions.width / 2 - w / 2),
+        y: Math.round(pageDimensions.height / 2 - h / 2),
+        width: w,
+        height: h,
+        dataUrl: decryptedDataUrl,
+      }
+      setPlacedItems((prev) => [...prev, newItem])
+      setSelectedId(newItem.id)
+
+      // Close modal
+      setUnlockTarget(null)
+      setUnlockPin('')
+    } catch (err: any) {
+      console.error(err)
+      setUnlockError('Incorrect PIN. Please try again.')
+    }
+  }
+
+  const deleteSavedSignature = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        const records: StoredSignatureRecord[] = JSON.parse(raw)
+        const updated = records.filter((r) => r.id !== id)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      }
+      setSavedSignatures((prev) => prev.filter((s) => s.id !== id))
+    } catch (err) {
+      console.error('Failed to delete signature:', err)
+    }
+  }
+
+  // ─── 7. Quick Stamps (Date, Checkmark) ──────────────────────────────────────
   const addDateStamp = () => {
     const today = new Date().toISOString().split('T')[0]
     const canvas = document.createElement('canvas')
@@ -402,7 +555,7 @@ export default function SignPDF() {
     setSelectedId(newItem.id)
   }
 
-  // ─── 6. Drag & Resize Placed Items ──────────────────────────────────────────
+  // ─── 8. Drag & Resize Placed Items ──────────────────────────────────────────
   const startDrag = (id: string, e: React.PointerEvent, isResize = false) => {
     e.stopPropagation()
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -454,26 +607,26 @@ export default function SignPDF() {
     window.addEventListener('pointerup', onUp)
   }
 
-  const deleteItem = (id: string) => {
+  const deletePlacedItem = (id: string) => {
     setPlacedItems((prev) => prev.filter((a) => a.id !== id))
     setSelectedId((curr) => (curr === id ? null : curr))
   }
 
-  // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedId(null)
         setIsModalOpen(false)
+        setUnlockTarget(null)
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
-        deleteItem(selectedId)
+        deletePlacedItem(selectedId)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId])
 
-  // ─── 7. Export Signed PDF with pdf-lib ──────────────────────────────────────
+  // ─── 9. Export Signed PDF with pdf-lib ──────────────────────────────────────
   const handleExportSigned = async () => {
     const file = files[0]
     if (!file) return
@@ -539,7 +692,7 @@ export default function SignPDF() {
   return (
     <ToolPageLayout
       title="Sign PDF"
-      description="Create your digital signature by drawing, typing, or uploading, and place it anywhere on your PDF."
+      description="Create your digital signature with AES-256 encryption, add date stamps & checkmarks, and sign documents securely in your browser."
       color="teal"
       icon={<SignIcon />}
     >
@@ -597,9 +750,9 @@ export default function SignPDF() {
               <p className="text-[11px] text-slate-500 mt-0.5">Elegant handwriting calligraphy styles</p>
             </div>
             <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-2xl">📤</span>
-              <p className="font-bold text-xs text-slate-800 mt-1.5">Upload Image</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Auto-cleans background transparency</p>
+              <span className="text-2xl">🛡️</span>
+              <p className="font-bold text-xs text-slate-800 mt-1.5">AES-256 Encryption</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Optional PIN protection for saved signatures</p>
             </div>
           </div>
         </div>
@@ -711,36 +864,81 @@ export default function SignPDF() {
             </div>
           </div>
 
-          {/* Saved Signatures Tray */}
+          {/* Saved Signatures Tray with AES-256 & PIN Badge */}
           {savedSignatures.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 flex items-center gap-3 overflow-x-auto text-xs shadow-2xs">
-              <span className="font-bold text-slate-700 shrink-0">Saved Signatures:</span>
+            <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 flex items-center justify-between gap-3 overflow-x-auto text-xs shadow-2xs">
               <div className="flex items-center gap-2">
-                {savedSignatures.map((sig) => (
-                  <button
-                    key={sig.id}
-                    onClick={() => {
-                      const w = 150
-                      const h = 60
-                      const newItem: PlacedSignature = {
-                        id: 'sig_' + Date.now(),
-                        page: currentPage,
-                        x: Math.round(pageDimensions.width / 2 - w / 2),
-                        y: Math.round(pageDimensions.height / 2 - h / 2),
-                        width: w,
-                        height: h,
-                        dataUrl: sig.dataUrl,
-                      }
-                      setPlacedItems((prev) => [...prev, newItem])
-                      setSelectedId(newItem.id)
-                    }}
-                    className="h-10 px-3 bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-lg flex items-center justify-center transition-all group shrink-0"
-                    title="Click to stamp onto this page"
-                  >
-                    <img src={sig.dataUrl} alt={sig.label} className="h-8 max-w-[100px] object-contain pointer-events-none" />
-                    <span className="text-[10px] text-teal-600 font-semibold ml-1.5 hidden group-hover:inline">+ Stamp</span>
-                  </button>
-                ))}
+                <span className="font-bold text-slate-700 shrink-0 flex items-center gap-1">
+                  <span>🔒</span> Saved Signatures:
+                </span>
+                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                  AES-256 Encrypted
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {savedSignatures.map((sig) => {
+                  if (sig.isLocked) {
+                    return (
+                      <button
+                        key={sig.id}
+                        onClick={() => {
+                          setUnlockTarget(sig)
+                          setUnlockPin('')
+                          setUnlockError(null)
+                        }}
+                        className="h-10 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-lg flex items-center gap-1.5 font-semibold transition-all shrink-0 relative group"
+                        title="Locked with PIN — Click to unlock"
+                      >
+                        <span>🔐</span>
+                        <span className="text-xs">PIN Locked</span>
+                        <button
+                          type="button"
+                          onClick={(e) => deleteSavedSignature(sig.id, e)}
+                          className="w-4 h-4 rounded-full bg-red-100 hover:bg-red-500 hover:text-white text-red-600 flex items-center justify-center text-[10px] ml-1 opacity-70 group-hover:opacity-100 transition-opacity"
+                          title="Delete saved signature"
+                        >
+                          ✕
+                        </button>
+                      </button>
+                    )
+                  }
+
+                  return (
+                    <div
+                      key={sig.id}
+                      onClick={() => {
+                        if (!sig.dataUrl) return
+                        const w = 150
+                        const h = 60
+                        const newItem: PlacedSignature = {
+                          id: 'sig_' + Date.now(),
+                          page: currentPage,
+                          x: Math.round(pageDimensions.width / 2 - w / 2),
+                          y: Math.round(pageDimensions.height / 2 - h / 2),
+                          width: w,
+                          height: h,
+                          dataUrl: sig.dataUrl,
+                        }
+                        setPlacedItems((prev) => [...prev, newItem])
+                        setSelectedId(newItem.id)
+                      }}
+                      className="h-10 px-2.5 bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-lg flex items-center justify-between gap-2 transition-all cursor-pointer group shrink-0 relative"
+                      title="Click to stamp onto this page"
+                    >
+                      <img src={sig.dataUrl} alt={sig.label} className="h-7 max-w-[90px] object-contain pointer-events-none" />
+                      <span className="text-[10px] text-teal-600 font-semibold hidden group-hover:inline">+ Stamp</span>
+                      <button
+                        type="button"
+                        onClick={(e) => deleteSavedSignature(sig.id, e)}
+                        className="w-4 h-4 rounded-full bg-slate-200 hover:bg-red-500 hover:text-white text-slate-500 flex items-center justify-center text-[10px] opacity-60 group-hover:opacity-100 transition-opacity"
+                        title="Delete from this device"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -796,7 +994,7 @@ export default function SignPDF() {
                           type="button"
                           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
                           onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
-                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); deleteItem(item.id) }}
+                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); deletePlacedItem(item.id) }}
                           className="absolute -top-3.5 -right-3.5 w-5 h-5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-40 transition-transform hover:scale-110"
                           title="Delete signature"
                         >
@@ -819,7 +1017,7 @@ export default function SignPDF() {
           {/* Quick Help & Status */}
           <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 px-2 gap-2">
             <div className="flex items-center gap-3">
-              <span>💡 <strong>Tip:</strong> Click "Create Signature" to draw or type your signature, then drag it anywhere.</span>
+              <span>💡 <strong>Privacy Note:</strong> All signatures are encrypted locally with AES-256. Zero data is ever sent to any server.</span>
               {placedItems.length > 0 && (
                 <span className="text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                   {placedItems.length} signature{placedItems.length !== 1 ? 's' : ''} placed
@@ -839,7 +1037,7 @@ export default function SignPDF() {
       {/* ── Create Signature Modal ── */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
             {/* Modal Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -890,7 +1088,7 @@ export default function SignPDF() {
                     ref={padCanvasRef}
                     width={480}
                     height={180}
-                    className="w-full h-44 cursor-crosshair touch-none"
+                    className="w-full h-40 cursor-crosshair touch-none"
                     onPointerDown={startPadDrawing}
                     onPointerMove={drawOnPad}
                     onPointerUp={stopPadDrawing}
@@ -935,19 +1133,12 @@ export default function SignPDF() {
                     ))}
                   </div>
                 </div>
-
-                <button
-                  onClick={handleSaveDrawnSignature}
-                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold rounded-xl shadow-md shadow-teal-100 text-sm transition-colors mt-2"
-                >
-                  Insert Signature
-                </button>
               </div>
             )}
 
             {/* Tab 2: Type */}
             {modalTab === 'type' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Your Full Name:</label>
                   <input
@@ -955,7 +1146,7 @@ export default function SignPDF() {
                     value={typedName}
                     onChange={(e) => setTypedName(e.target.value)}
                     placeholder="e.g. John Doe"
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
                   />
                 </div>
 
@@ -972,19 +1163,19 @@ export default function SignPDF() {
                         <button
                           key={idx}
                           onClick={() => setTypedFontIndex(idx)}
-                          className={`p-3 rounded-xl border text-center transition-all ${
+                          className={`p-2.5 rounded-xl border text-center transition-all ${
                             typedFontIndex === idx
                               ? 'border-teal-500 bg-teal-50/50 shadow-xs'
                               : 'border-slate-200 hover:border-slate-300 bg-slate-50'
                           }`}
                         >
                           <p
-                            className={`text-lg truncate ${style.font}`}
+                            className={`text-base truncate ${style.font}`}
                             style={{ color: typedColor }}
                           >
                             {typedName}
                           </p>
-                          <span className="text-[10px] text-slate-400 font-medium mt-1 block">{style.name}</span>
+                          <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">{style.name}</span>
                         </button>
                       ))}
                     </div>
@@ -1002,23 +1193,15 @@ export default function SignPDF() {
                     </div>
                   </div>
                 )}
-
-                <button
-                  onClick={handleSaveTypedSignature}
-                  disabled={!typedName.trim()}
-                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 text-sm transition-colors mt-2"
-                >
-                  Insert Signature
-                </button>
               </div>
             )}
 
             {/* Tab 3: Upload */}
             {modalTab === 'upload' && (
-              <div className="space-y-4 text-center">
+              <div className="space-y-3 text-center">
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-2xl p-8 cursor-pointer transition-colors bg-slate-50 hover:bg-teal-50/30"
+                  className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-2xl p-6 cursor-pointer transition-colors bg-slate-50 hover:bg-teal-50/30"
                 >
                   <span className="text-3xl">📷</span>
                   <p className="font-bold text-sm text-slate-800 mt-2">Upload signature photo or scan</p>
@@ -1033,6 +1216,126 @@ export default function SignPDF() {
                 />
               </div>
             )}
+
+            {/* ── Security & AES-256 Encryption Options ── */}
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2.5">
+              <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-800 select-none">
+                <input
+                  type="checkbox"
+                  checked={saveToDevice}
+                  onChange={(e) => setSaveToDevice(e.target.checked)}
+                  className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                />
+                <span>Save signature securely on this device (AES-256 Encrypted)</span>
+              </label>
+
+              {saveToDevice && (
+                <div className="pl-6 space-y-2 pt-1 border-t border-slate-200/60">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={usePinLock}
+                      onChange={(e) => setUsePinLock(e.target.checked)}
+                      className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                    />
+                    <span className="font-medium">🔐 Protect signature with a PIN code (Optional)</span>
+                  </label>
+
+                  {usePinLock && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="password"
+                        value={creationPin}
+                        onChange={(e) => setCreationPin(e.target.value)}
+                        placeholder="Enter 4-digit PIN"
+                        maxLength={8}
+                        className="w-40 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono tracking-widest text-xs focus:ring-2 focus:ring-teal-500 outline-none"
+                      />
+                      <span className="text-[11px] text-slate-500">Required to unlock on this device</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            {modalTab !== 'upload' && (
+              <button
+                onClick={modalTab === 'draw' ? handleSaveDrawnSignature : handleSaveTypedSignature}
+                disabled={modalTab === 'type' && !typedName.trim()}
+                className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 text-sm transition-colors"
+              >
+                Insert Signature
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Unlock PIN Modal ── */}
+      {unlockTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔐</span>
+                <h3 className="text-base font-bold text-slate-900">Unlock Signature</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setUnlockTarget(null)
+                  setUnlockPin('')
+                  setUnlockError(null)
+                }}
+                className="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              This signature is encrypted with AES-256. Enter your PIN to decrypt and place it on your document.
+            </p>
+
+            <form onSubmit={handleUnlockSubmit} className="space-y-3">
+              <input
+                type="password"
+                value={unlockPin}
+                onChange={(e) => {
+                  setUnlockPin(e.target.value)
+                  setUnlockError(null)
+                }}
+                placeholder="Enter PIN code"
+                autoFocus
+                maxLength={8}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-center font-mono text-lg tracking-widest text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"
+              />
+
+              {unlockError && (
+                <p className="text-xs text-red-600 font-semibold text-center">{unlockError}</p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnlockTarget(null)
+                    setUnlockPin('')
+                    setUnlockError(null)
+                  }}
+                  className="flex-1 py-2.5 border border-slate-300 rounded-xl text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!unlockPin.trim()}
+                  className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                >
+                  Unlock &amp; Stamp
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
