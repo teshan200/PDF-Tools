@@ -1095,14 +1095,14 @@ export default function SignPDF() {
                 {savedSignatures.map((sig) => {
                   if (sig.isLocked) {
                     return (
-                      <button
+                      <div
                         key={sig.id}
                         onClick={() => {
                           setUnlockTarget(sig)
                           setUnlockPin('')
                           setUnlockError(null)
                         }}
-                        className="h-10 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-lg flex items-center gap-1.5 font-semibold transition-all shrink-0 relative group"
+                        className="h-10 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-lg flex items-center gap-1.5 font-semibold transition-all shrink-0 relative group cursor-pointer"
                         title="Locked with PIN — Click to unlock"
                       >
                         <span>🔐</span>
@@ -1115,7 +1115,7 @@ export default function SignPDF() {
                         >
                           ✕
                         </button>
-                      </button>
+                      </div>
                     )
                   }
 
