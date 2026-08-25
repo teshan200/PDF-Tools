@@ -162,8 +162,7 @@ export default function Home() {
       {/* ── Hero ─────────────────────────────── */}
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 text-white py-20 sm:py-28 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium text-blue-100 mb-6">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-100 mb-6">
             10 Free PDF Tools — No Signup Required
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 tracking-tight leading-tight">

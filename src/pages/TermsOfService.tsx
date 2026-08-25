@@ -10,8 +10,8 @@ export default function TermsOfService() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xs space-y-8">
         <div className="border-b border-slate-100 pb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-800 rounded-full text-xs font-bold mb-3">
-            <span>📜</span> Terms of Use
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded-full text-xs font-bold mb-3">
+            Terms of Use
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900">Terms of Service</h1>
           <p className="text-xs text-slate-500 mt-1">Last Updated: August 25, 2026</p>

@@ -10,8 +10,8 @@ export default function About() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-8">
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
         <div className="border-b border-slate-100 pb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-full text-xs font-bold mb-3">
-            <span>💡</span> Our Mission
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded-full text-xs font-bold mb-3">
+            Our Mission
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">About Easy PDF Tools</h1>
           <p className="text-slate-500 mt-2 text-base leading-relaxed">
@@ -32,21 +32,27 @@ export default function About() {
         {/* 3 Core Pillars */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-            <span className="text-2xl">🔒</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center font-bold text-xs">
+              0b
+            </div>
             <h3 className="font-bold text-slate-900 text-sm">100% Client-Side</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
               Your files never touch a cloud server. All operations run in local Web Worker threads.
             </p>
           </div>
           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-            <span className="text-2xl">⭐</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center font-bold text-xs">
+              GIT
+            </div>
             <h3 className="font-bold text-slate-900 text-sm">Open Source</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
               The entire code is publicly accessible on GitHub for transparency and security auditing.
             </p>
           </div>
           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-            <span className="text-2xl">⚡</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center font-bold text-xs">
+              FREE
+            </div>
             <h3 className="font-bold text-slate-900 text-sm">Zero Limits</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
               Unlimited file sizes, no account creation, and zero paywalls for users worldwide.

@@ -23,8 +23,8 @@ export default function Contact() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xs space-y-8">
         <div className="border-b border-slate-100 pb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 text-teal-800 rounded-full text-xs font-bold mb-3">
-            <span>✉️</span> Get in Touch
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded-full text-xs font-bold mb-3">
+            Get in Touch
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900">Contact Us</h1>
           <p className="text-slate-500 mt-1 text-sm">
@@ -33,10 +33,9 @@ export default function Contact() {
         </div>
 
         {submitted ? (
-          <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
-            <span className="text-3xl">🎉</span>
-            <h3 className="font-bold text-emerald-950 text-base">Thank you for your message!</h3>
-            <p className="text-xs text-emerald-800">Your email client has opened. We typically respond within 24–48 hours.</p>
+          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-2">
+            <h3 className="font-bold text-slate-900 text-base">Thank you for your message!</h3>
+            <p className="text-xs text-slate-600">Your email client has opened. We typically respond within 24–48 hours.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
