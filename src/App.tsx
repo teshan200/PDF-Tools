@@ -11,6 +11,10 @@ import ProtectPDF from './pages/ProtectPDF'
 import UnlockPDF from './pages/UnlockPDF'
 import EditPDF from './pages/EditPDF'
 import SignPDF from './pages/SignPDF'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import About from './pages/About'
+import Contact from './pages/Contact'
 
 const ROUTES: Record<string, React.ComponentType> = {
   '/': Home,
@@ -24,6 +28,10 @@ const ROUTES: Record<string, React.ComponentType> = {
   '/rotate': RotatePDF,
   '/protect': ProtectPDF,
   '/unlock': UnlockPDF,
+  '/privacy': PrivacyPolicy,
+  '/terms': TermsOfService,
+  '/about': About,
+  '/contact': Contact,
 }
 
 function Routes() {

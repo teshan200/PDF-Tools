@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useRouter } from '../router'
-import SecurityModal from './SecurityModal'
 
 const NAV_ITEMS = [
   { path: '/merge', label: 'Merge PDF' },
@@ -55,7 +54,6 @@ function LinkedinIcon() {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { path, navigate } = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [securityModalOpen, setSecurityModalOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -92,18 +90,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
 
-            {/* Privacy Shield Badge & Mobile Menu Button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSecurityModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 border border-emerald-200 text-emerald-800 rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-                title="Click to view Privacy & Security Architecture"
+            {/* Open Source GitHub Badge & Mobile Menu Button */}
+            <div className="flex items-center gap-2.5">
+              <a
+                href="https://github.com/teshan200/PDF-Tools"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-bold shadow-xs hover:shadow transition-all"
+                title="100% Free & Open Source on GitHub"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="hidden md:inline">100% Private (0b uploaded)</span>
-                <span className="md:hidden">100% Private</span>
-                <span className="text-[10px] bg-emerald-200/80 px-1 py-0.2 rounded text-emerald-900 font-bold">Info</span>
-              </button>
+                <GithubIcon />
+                <span className="hidden sm:inline">⭐ Open Source</span>
+                <span className="sm:hidden">⭐ GitHub</span>
+              </a>
 
               {/* Mobile menu toggle */}
               <button
@@ -148,74 +147,113 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
 
       {/* ── Footer ───────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-white mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo, Privacy & Copyright */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+      <footer className="border-t border-slate-200 bg-white mt-16 text-xs text-slate-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
+            {/* Column 1: Brand & Open Source */}
+            <div className="space-y-3 md:col-span-1">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-xs">
                   <PdfLogo />
                 </div>
-                <span className="font-bold text-slate-800">PDF Tools</span>
+                <span className="font-extrabold text-slate-900 text-sm">Easy PDF Tools</span>
               </div>
-              <span className="hidden sm:inline text-slate-300">|</span>
-              <button
-                onClick={() => setSecurityModalOpen(true)}
-                className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>🛡️ Security &amp; Privacy Guarantee (0b uploaded)</span>
-              </button>
-            </div>
-
-            {/* Developer Credits & Socials */}
-            <div className="flex flex-col sm:flex-row items-center gap-3.5 text-xs text-slate-600">
-              <span className="text-slate-700">
-                Developed by <a href="https://teshan.click" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 hover:underline">Teshan Pamodya</a>
-              </span>
-
-              <div className="flex items-center gap-2">
+              <p className="text-slate-500 leading-relaxed text-[11px]">
+                Free, fast, and 100% private in-browser PDF editor, signer, and converter with zero server file storage.
+              </p>
+              <div className="pt-1">
                 <a
-                  href="https://teshan.click"
+                  href="https://github.com/teshan200/PDF-Tools"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Website"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
-                >
-                  <GlobeIcon />
-                  <span>teshan.click</span>
-                </a>
-                <a
-                  href="https://github.com/teshan200/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-[11px] transition-colors"
                 >
                   <GithubIcon />
-                  <span>GitHub</span>
-                </a>
-                <a
-                  href="https://www.linkedin.com/in/teshan-pamodya/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="LinkedIn"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors"
-                >
-                  <LinkedinIcon />
-                  <span>LinkedIn</span>
+                  <span>⭐ Public GitHub Repository</span>
                 </a>
               </div>
+            </div>
+
+            {/* Column 2: Popular Tools */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">PDF Tools</h4>
+              <ul className="space-y-1.5 text-slate-500">
+                <li><button onClick={() => navigate('/edit')} className="hover:text-blue-600 transition-colors">Edit PDF</button></li>
+                <li><button onClick={() => navigate('/sign')} className="hover:text-blue-600 transition-colors">Sign PDF</button></li>
+                <li><button onClick={() => navigate('/merge')} className="hover:text-blue-600 transition-colors">Merge PDF</button></li>
+                <li><button onClick={() => navigate('/split')} className="hover:text-blue-600 transition-colors">Split PDF</button></li>
+                <li><button onClick={() => navigate('/compress')} className="hover:text-blue-600 transition-colors">Compress PDF</button></li>
+              </ul>
+            </div>
+
+            {/* Column 3: More Tools */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Convert &amp; Security</h4>
+              <ul className="space-y-1.5 text-slate-500">
+                <li><button onClick={() => navigate('/word')} className="hover:text-blue-600 transition-colors">PDF to Word</button></li>
+                <li><button onClick={() => navigate('/jpg')} className="hover:text-blue-600 transition-colors">PDF to JPG</button></li>
+                <li><button onClick={() => navigate('/rotate')} className="hover:text-blue-600 transition-colors">Rotate PDF</button></li>
+                <li><button onClick={() => navigate('/protect')} className="hover:text-blue-600 transition-colors">Protect PDF</button></li>
+                <li><button onClick={() => navigate('/unlock')} className="hover:text-blue-600 transition-colors">Unlock PDF</button></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Legal & Company (Google AdSense Requirements) */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Company &amp; Legal</h4>
+              <ul className="space-y-1.5 text-slate-500">
+                <li><button onClick={() => navigate('/about')} className="hover:text-blue-600 transition-colors">About Us</button></li>
+                <li><button onClick={() => navigate('/privacy')} className="hover:text-blue-600 transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/terms')} className="hover:text-blue-600 transition-colors">Terms of Service</button></li>
+                <li><button onClick={() => navigate('/contact')} className="hover:text-blue-600 transition-colors">Contact Us</button></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Row */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-slate-400 text-[11px]">
+              &copy; {new Date().getFullYear()} Easy PDF Tools (easypdftools.xyz) • Developed by{' '}
+              <a href="https://teshan.click" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-700 hover:underline">
+                Teshan Pamodya
+              </a>
+            </p>
+
+            <div className="flex items-center gap-2">
+              <a
+                href="https://teshan.click"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Website"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[11px]"
+              >
+                <GlobeIcon />
+                <span>teshan.click</span>
+              </a>
+              <a
+                href="https://github.com/teshan200/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[11px]"
+              >
+                <GithubIcon />
+                <span>GitHub</span>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/teshan-pamodya/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors text-[11px]"
+              >
+                <LinkedinIcon />
+                <span>LinkedIn</span>
+              </a>
             </div>
           </div>
         </div>
       </footer>
-
-      {/* Security & How It Works Modal */}
-      <SecurityModal
-        isOpen={securityModalOpen}
-        onClose={() => setSecurityModalOpen(false)}
-      />
     </div>
   )
 }
