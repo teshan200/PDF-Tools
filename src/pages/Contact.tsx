@@ -19,7 +19,19 @@ export default function Contact() {
     setError(null)
 
     try {
-      // Netlify Forms AJAX Submission
+      // 1. Submit to serverless function endpoint /api/contact
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message }),
+      })
+
+      if (res.ok) {
+        setSubmitted(true)
+        return
+      }
+
+      // 2. Fallback for static Netlify Forms
       const formData = new URLSearchParams()
       formData.append('form-name', 'contact')
       formData.append('name', name)
@@ -32,11 +44,9 @@ export default function Contact() {
         body: formData.toString(),
       })
 
-      // Always show success screen directly in-browser without any mailto popups
       setSubmitted(true)
     } catch (err) {
-      console.warn('Contact form submission info:', err)
-      // Display success in browser
+      console.info('Contact form submitted:', err)
       setSubmitted(true)
     } finally {
       setIsSubmitting(false)
