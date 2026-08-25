@@ -767,41 +767,41 @@ export default function EditPDF() {
           <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload any PDF to edit text, cover content, add images & draw" />
           {errorMsg && <ErrorMessage message={errorMsg} onRetry={handleReset} />}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <p className="font-bold text-xs text-slate-800">Edit Existing Text</p>
-              <p className="text-[11px] text-slate-500">Click any text in the PDF to change it</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Edit Existing Text</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Click any text in the PDF to change it</p>
             </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
-              <p className="font-bold text-xs text-slate-800">Whiteout &amp; Erase</p>
-              <p className="text-[11px] text-slate-500">Cleanly cover up unwanted text</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Whiteout &amp; Erase</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Cleanly cover up unwanted text</p>
             </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <p className="font-bold text-xs text-slate-800">Images &amp; Signatures</p>
-              <p className="text-[11px] text-slate-500">Add stamps, photos and signs</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Images &amp; Signatures</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Add stamps, photos and signs</p>
             </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               </div>
-              <p className="font-bold text-xs text-slate-800">Freehand Drawing</p>
-              <p className="text-[11px] text-slate-500">Draw notes, arrows &amp; highlights</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Freehand Drawing</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Draw notes, arrows &amp; highlights</p>
             </div>
           </div>
         </div>
@@ -809,15 +809,15 @@ export default function EditPDF() {
         /* ── Modern Studio Workspace ── */
         <div className="space-y-3" ref={containerRef}>
           {/* Main Top Studio Toolbar */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-2 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-2.5 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
             {/* Tool Selection Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl flex-wrap">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl flex-wrap">
               <button
                 onClick={() => { setActiveTool('select'); setSelectedId(null) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTool === 'select'
-                    ? 'bg-white text-indigo-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Select items or click existing text to edit"
               >
@@ -829,8 +829,10 @@ export default function EditPDF() {
 
               <button
                 onClick={() => setActiveTool('text')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTool === 'text' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTool === 'text'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Click anywhere to place a new text box"
               >
@@ -840,8 +842,10 @@ export default function EditPDF() {
 
               <button
                 onClick={() => setActiveTool('whiteout')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTool === 'whiteout' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTool === 'whiteout'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Place a white eraser box over text"
               >
@@ -853,7 +857,7 @@ export default function EditPDF() {
                 onClick={() => {
                   imageInputRef.current?.click()
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                 title="Upload image or digital signature"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -871,8 +875,10 @@ export default function EditPDF() {
 
               <button
                 onClick={() => setActiveTool('draw')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTool === 'draw' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTool === 'draw'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 title="Draw freehand with pen or highlighter"
               >
@@ -884,54 +890,54 @@ export default function EditPDF() {
             </div>
 
             {/* Page Nav */}
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/90 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="p-1 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 title="Previous page"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <span className="text-xs font-semibold text-slate-700 px-1 min-w-[70px] text-center">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 px-1 min-w-[70px] text-center">
                 {currentPage} / {numPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
                 disabled={currentPage >= numPages}
-                className="p-1 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 title="Next page"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
 
             {/* Zoom Controls */}
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/90 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setScale((s) => Math.max(0.4, parseFloat((s - 0.15).toFixed(2))))}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer"
                 title="Zoom Out"
               >
                 -
               </button>
-              <span className="text-xs font-semibold text-slate-700 w-9 text-center">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 w-9 text-center">
                 {Math.round(scale * 100)}%
               </span>
               <button
                 onClick={() => setScale((s) => Math.min(2.0, parseFloat((s + 0.15).toFixed(2))))}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer"
                 title="Zoom In"
               >
                 +
               </button>
               <button
                 onClick={fitToWidth}
-                className="text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors ml-0.5"
+                className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 px-1.5 py-0.5 rounded transition-colors ml-0.5 cursor-pointer"
               >
                 Fit
               </button>
@@ -942,7 +948,7 @@ export default function EditPDF() {
               <button
                 onClick={undoLast}
                 disabled={annotations.length === 0}
-                className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 text-xs flex items-center gap-1 font-medium transition-colors"
+                className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 text-xs flex items-center gap-1 font-medium transition-colors cursor-pointer"
                 title="Undo (Ctrl+Z)"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -953,7 +959,7 @@ export default function EditPDF() {
 
               <button
                 onClick={handleExport}
-                className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all hover:shadow"
+                className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all hover:shadow cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -965,8 +971,8 @@ export default function EditPDF() {
 
           {/* Contextual Floating Styling Ribbon for Active Tool */}
           {(activeTool === 'text' || (selectedItem && selectedItem.type === 'text')) && (
-            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs animate-fadeIn">
-              <span className="font-bold text-slate-800 flex items-center gap-1">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs animate-fadeIn">
+              <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-indigo-500" />
                 Text Style:
               </span>

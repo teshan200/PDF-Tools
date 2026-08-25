@@ -938,44 +938,44 @@ export default function SignPDF() {
           <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload any PDF to sign with smart ink extraction, AES-256 encryption & SHA-256 audit trail" />
           {errorMsg && <ErrorMessage message={errorMsg} onRetry={handleReset} />}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <CameraIcon className="w-4 h-4" />
               </div>
-              <p className="font-bold text-xs text-slate-800">Photo Extractor</p>
-              <p className="text-[11px] text-slate-500">Crops &amp; removes paper/shadows</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Photo Extractor</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Crops &amp; removes paper/shadows</p>
             </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <LockIcon className="w-4 h-4" />
               </div>
-              <p className="font-bold text-xs text-slate-800">AES-256 Storage</p>
-              <p className="text-[11px] text-slate-500">Encrypted on your device</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">AES-256 Storage</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Encrypted on your device</p>
             </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <ShieldIcon className="w-4 h-4" />
               </div>
-              <p className="font-bold text-xs text-slate-800">Audit Trail</p>
-              <p className="text-[11px] text-slate-500">SHA-256 cryptographic verification</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Audit Trail</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">SHA-256 cryptographic verification</p>
             </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1.5">
+            <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs">
+              <div className="w-8 h-8 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-1.5">
                 <CheckIcon className="w-4 h-4" />
               </div>
-              <p className="font-bold text-xs text-slate-800">PDF Flattening</p>
-              <p className="text-[11px] text-slate-500">Permanent vector embedding</p>
+              <p className="font-bold text-xs text-slate-800 dark:text-slate-200">PDF Flattening</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Permanent vector embedding</p>
             </div>
           </div>
 
           {/* Client-Side Guarantee */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 mt-0.5">
+          <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex items-start gap-3 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 flex items-center justify-center shrink-0 mt-0.5 border border-teal-100 dark:border-teal-900">
               <ShieldIcon className="w-4 h-4" />
             </div>
             <div className="space-y-1 text-xs">
-              <p className="font-bold text-slate-900">100% Client-Side Processing</p>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="font-bold text-slate-900 dark:text-white">100% Client-Side Processing</p>
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                 This tool runs locally inside your browser using Web Workers and the Web Crypto API. Your files and signatures never leave your computer or touch remote servers.
               </p>
             </div>
@@ -986,7 +986,7 @@ export default function SignPDF() {
         <div className="space-y-3" ref={containerRef}>
           {errorMsg && <ErrorMessage message={errorMsg} onRetry={() => setErrorMsg(null)} />}
           {/* Main Top Studio Toolbar */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-2 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-2.5 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
             {/* Signature & Quick Stamp Actions */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
@@ -994,7 +994,7 @@ export default function SignPDF() {
                   setIsModalOpen(true)
                   setTimeout(initPad, 50)
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white rounded-xl text-xs font-bold shadow-xs transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1004,84 +1004,84 @@ export default function SignPDF() {
 
               <button
                 onClick={addDateStamp}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all cursor-pointer"
                 title="Add today's date stamp"
               >
-                <CalendarIcon className="w-3.5 h-3.5 text-slate-600" />
+                <CalendarIcon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                 Add Date
               </button>
 
               <button
                 onClick={addCheckmarkStamp}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all cursor-pointer"
                 title="Add a green checkmark"
               >
-                <CheckIcon className="w-3.5 h-3.5 text-emerald-600" />
+                <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Checkmark
               </button>
 
               {/* Audit Trail Toggle */}
-              <label className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-medium text-slate-600 cursor-pointer hover:bg-slate-100 select-none ml-1">
+              <label className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 select-none ml-1">
                 <input
                   type="checkbox"
                   checked={includeAuditTrail}
                   onChange={(e) => setIncludeAuditTrail(e.target.checked)}
-                  className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                  className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer"
                 />
-                <ShieldIcon className="w-3.5 h-3.5 text-slate-500" />
+                <ShieldIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 <span>Audit Trail Stamp</span>
               </label>
             </div>
 
             {/* Page Navigation */}
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/90 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="p-1 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 title="Previous page"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <span className="text-xs font-semibold text-slate-700 px-1 min-w-[70px] text-center">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 px-1 min-w-[70px] text-center">
                 {currentPage} / {numPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
                 disabled={currentPage >= numPages}
-                className="p-1 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 title="Next page"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
 
             {/* Zoom Controls */}
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/90 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setScale((s) => Math.max(0.4, parseFloat((s - 0.15).toFixed(2))))}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer"
                 title="Zoom Out"
               >
                 -
               </button>
-              <span className="text-xs font-semibold text-slate-700 w-9 text-center">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 w-9 text-center">
                 {Math.round(scale * 100)}%
               </span>
               <button
                 onClick={() => setScale((s) => Math.min(2.0, parseFloat((s + 0.15).toFixed(2))))}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer"
                 title="Zoom In"
               >
                 +
               </button>
               <button
                 onClick={fitToWidth}
-                className="text-[11px] font-semibold text-teal-600 hover:bg-teal-50 px-1.5 py-0.5 rounded transition-colors ml-0.5"
+                className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/60 px-1.5 py-0.5 rounded transition-colors ml-0.5 cursor-pointer"
               >
                 Fit
               </button>
@@ -1092,7 +1092,7 @@ export default function SignPDF() {
               <button
                 onClick={handleExportSigned}
                 disabled={placedItems.length === 0}
-                className="bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                className="bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1104,13 +1104,13 @@ export default function SignPDF() {
 
           {/* Saved Signatures Tray with AES-256 & Session Lock */}
           {savedSignatures.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 flex items-center justify-between gap-3 overflow-x-auto text-xs shadow-2xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl px-3.5 py-2 flex items-center justify-between gap-3 overflow-x-auto text-xs shadow-2xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-700 shrink-0 flex items-center gap-1.5">
-                  <LockIcon className="w-3.5 h-3.5 text-slate-500" />
+                <span className="font-bold text-slate-700 dark:text-slate-300 shrink-0 flex items-center gap-1.5">
+                  <LockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                   <span>Saved Signatures:</span>
                 </span>
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full shrink-0">
                   AES-256 Encrypted
                 </span>
               </div>
@@ -1126,15 +1126,15 @@ export default function SignPDF() {
                           setUnlockPin('')
                           setUnlockError(null)
                         }}
-                        className="h-10 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-lg flex items-center gap-1.5 font-semibold transition-all shrink-0 relative group cursor-pointer"
+                        className="h-10 px-3 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-xl flex items-center gap-1.5 font-semibold transition-all shrink-0 relative group cursor-pointer"
                         title="Locked with PIN — Click to unlock"
                       >
-                        <LockIcon className="w-3.5 h-3.5 text-amber-700" />
+                        <LockIcon className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                         <span className="text-xs">PIN Locked</span>
                         <button
                           type="button"
                           onClick={(e) => deleteSavedSignature(sig.id, e)}
-                          className="w-4 h-4 rounded-full bg-red-100 hover:bg-red-500 hover:text-white text-red-600 flex items-center justify-center text-[10px] ml-1 opacity-70 group-hover:opacity-100 transition-opacity"
+                          className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-950/80 hover:bg-red-500 hover:text-white text-red-600 dark:text-red-400 flex items-center justify-center text-[10px] ml-1 opacity-70 group-hover:opacity-100 transition-opacity cursor-pointer"
                           title="Delete saved signature"
                         >
                           ✕
@@ -1162,15 +1162,15 @@ export default function SignPDF() {
                         setPlacedItems((prev) => [...prev, newItem])
                         setSelectedId(newItem.id)
                       }}
-                      className="h-10 px-2.5 bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-lg flex items-center justify-between gap-2 transition-all cursor-pointer group shrink-0 relative"
+                      className="h-10 px-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/50 border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-700 rounded-xl flex items-center justify-between gap-2 transition-all cursor-pointer group shrink-0 relative"
                       title="Click to stamp onto this page"
                     >
-                      <img src={sig.dataUrl} alt={sig.label} className="h-7 max-w-[90px] object-contain pointer-events-none" />
-                      <span className="text-[10px] text-teal-600 font-semibold hidden group-hover:inline">+ Stamp</span>
+                      <img src={sig.dataUrl} alt={sig.label} className="h-7 max-w-[90px] object-contain pointer-events-none bg-white rounded-xs px-1" />
+                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold hidden group-hover:inline">+ Stamp</span>
                       <button
                         type="button"
                         onClick={(e) => deleteSavedSignature(sig.id, e)}
-                        className="w-4 h-4 rounded-full bg-slate-200 hover:bg-red-500 hover:text-white text-slate-500 flex items-center justify-center text-[10px] opacity-60 group-hover:opacity-100 transition-opacity"
+                        className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-300 flex items-center justify-center text-[10px] opacity-60 group-hover:opacity-100 transition-opacity cursor-pointer"
                         title="Delete from this device"
                       >
                         ✕
@@ -1182,10 +1182,10 @@ export default function SignPDF() {
                 {savedSignatures.some((s) => s.hasPin && !s.isLocked) && (
                   <button
                     onClick={lockSensitiveSignatures}
-                    className="h-8 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors shrink-0"
+                    className="h-8 px-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-[11px] font-medium flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
                     title="Zero out decrypted RAM and lock session immediately"
                   >
-                    <LockIcon className="w-3.5 h-3.5 text-slate-500" />
+                    <LockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                     <span>Lock Session</span>
                   </button>
                 )}
@@ -1195,7 +1195,7 @@ export default function SignPDF() {
 
           {/* Document Canvas Workspace */}
           <div
-            className="flex justify-center overflow-auto p-4 sm:p-8 bg-slate-100/90 rounded-2xl border border-slate-200 min-h-[550px] shadow-inner"
+            className="flex justify-center overflow-auto p-4 sm:p-8 bg-slate-100 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[550px] shadow-inner"
             onClick={() => setSelectedId(null)}
           >
             <div
