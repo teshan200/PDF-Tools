@@ -54,7 +54,6 @@ export default function DropZone({
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
-    // Only leave if moving outside the entire zone
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragging(false)
     }
@@ -62,7 +61,6 @@ export default function DropZone({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files)
-    // Reset input so same file can be re-selected
     e.target.value = ''
   }
 
@@ -85,14 +83,14 @@ export default function DropZone({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       className={[
-        'relative cursor-pointer rounded-2xl border-2 border-dashed p-10',
-        'flex flex-col items-center justify-center gap-4 min-h-52 text-center',
-        'transition-all duration-200 select-none outline-none',
+        'relative cursor-pointer rounded-2xl border-2 border-dashed p-8 sm:p-12',
+        'flex flex-col items-center justify-center gap-3.5 min-h-[220px] text-center',
+        'transition-all duration-200 select-none outline-none group',
         isDragging
-          ? 'border-blue-500 bg-blue-50 scale-[1.01] shadow-md shadow-blue-100'
+          ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/40 scale-[1.01] shadow-lg shadow-blue-500/10'
           : hasFiles
-            ? 'border-emerald-400 bg-emerald-50/60'
-            : 'border-slate-300 bg-white hover:border-blue-400 hover:bg-slate-50',
+            ? 'border-emerald-500 dark:border-emerald-600 bg-emerald-50/40 dark:bg-emerald-950/20'
+            : 'border-slate-300 dark:border-slate-700/80 bg-white dark:bg-slate-900 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-slate-50/50 dark:hover:bg-slate-800/40',
         className,
       ].join(' ')}
     >
@@ -109,22 +107,22 @@ export default function DropZone({
       {hasFiles ? (
         <>
           {/* Success state */}
-          <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center">
-            <svg className="w-7 h-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div className="space-y-1">
-            <p className="font-semibold text-slate-900">
+            <p className="font-bold text-slate-900 dark:text-white text-sm">
               {selectedFiles.length === 1
                 ? selectedFiles[0].name
                 : `${selectedFiles.length} files selected`}
             </p>
             {selectedFiles.length === 1 && (
-              <p className="text-sm text-slate-500">{formatSize(selectedFiles[0].size)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{formatSize(selectedFiles[0].size)}</p>
             )}
             {selectedFiles.length > 1 && (
-              <p className="text-sm text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Total: {formatSize(selectedFiles.reduce((s, f) => s + f.size, 0))}
               </p>
             )}
@@ -134,7 +132,7 @@ export default function DropZone({
                 e.stopPropagation()
                 inputRef.current?.click()
               }}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium underline underline-offset-2 mt-1"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold mt-1 inline-block cursor-pointer"
             >
               {multiple ? 'Change files' : 'Change file'}
             </button>
@@ -145,12 +143,14 @@ export default function DropZone({
           {/* Empty state */}
           <div
             className={[
-              'w-14 h-14 rounded-full flex items-center justify-center transition-colors',
-              isDragging ? 'bg-blue-100' : 'bg-slate-100',
+              'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 border',
+              isDragging
+                ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 text-blue-600'
+                : 'bg-slate-100 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 group-hover:scale-105 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:border-blue-200 dark:group-hover:border-blue-800',
             ].join(' ')}
           >
             <svg
-              className={['w-7 h-7 transition-colors', isDragging ? 'text-blue-600' : 'text-slate-400'].join(' ')}
+              className="w-6 h-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -158,22 +158,21 @@ export default function DropZone({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={1.5}
+                strokeWidth={1.75}
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
           </div>
-          <div className="space-y-1.5">
-            <p className="font-semibold text-slate-700">
+          <div className="space-y-1">
+            <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">
               {isDragging
-                ? `Drop your ${multiple ? 'files' : 'file'} here!`
-                : label || `Drag & drop your PDF${multiple ? 's' : ''} here`}
+                ? `Drop your ${multiple ? 'files' : 'file'} here`
+                : label || `Select ${multiple ? 'PDF files' : 'a PDF file'} or drag & drop`}
             </p>
-            <p className="text-sm text-slate-500">
-              or{' '}
-              <span className="text-blue-600 font-medium">browse from your device</span>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Files stay completely private on your device
             </p>
-            {hint && <p className="text-xs text-slate-400 pt-1">{hint}</p>}
+            {hint && <p className="text-[11px] text-slate-400 dark:text-slate-500 pt-1 font-medium">{hint}</p>}
           </div>
         </>
       )}

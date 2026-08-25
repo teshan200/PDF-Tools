@@ -3,12 +3,6 @@ import { useRouter } from '../router'
 import { useTheme } from '../context/ThemeContext'
 import { SunIcon, MoonIcon } from './Icons'
 
-interface ToolItem {
-  path: string
-  label: string
-  desc: string
-}
-
 const TOOL_CATEGORIES = [
   {
     category: 'Edit & Sign',
@@ -28,24 +22,26 @@ const TOOL_CATEGORIES = [
   {
     category: 'Convert & Optimize',
     items: [
-      { path: '/compress', label: 'Compress PDF', desc: 'Reduce file size efficiently' },
-      { path: '/word', label: 'PDF to Word', desc: 'Convert PDF to editable DOCX' },
       { path: '/jpg', label: 'PDF to JPG', desc: 'Extract pages as high-res JPGs' },
+      { path: '/word', label: 'PDF to Word', desc: 'Convert PDF to editable DOCX' },
+      { path: '/compress', label: 'Compress PDF', desc: 'Reduce file size efficiently' },
     ],
   },
   {
     category: 'Security',
     items: [
       { path: '/protect', label: 'Protect PDF', desc: 'Add password encryption' },
-      { path: '/unlock', label: 'Unlock PDF', desc: 'Remove password protection' },
+      { path: '/unlock', label: 'Unlock PDF', desc: 'Remove password restrictions' },
     ],
   },
 ]
 
 const QUICK_NAV = [
-  { path: '/edit', label: 'Edit PDF' },
-  { path: '/sign', label: 'Sign PDF' },
-  { path: '/merge', label: 'Merge PDF' },
+  { path: '/edit', label: 'Edit' },
+  { path: '/sign', label: 'Sign' },
+  { path: '/merge', label: 'Merge' },
+  { path: '/split', label: 'Split' },
+  { path: '/jpg', label: 'PDF to JPG' },
   { path: '/compress', label: 'Compress' },
 ]
 
@@ -105,24 +101,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
-      {/* ── Modern Navigation Header ───────────────────────────────── */}
-      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
+      {/* ── Glassmorphism Navigation Bar ───────────────────────────────── */}
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-50 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
+            {/* Brand Logo */}
             <button
               onClick={() => { navigate('/'); setMenuOpen(false) }}
-              className="flex items-center gap-2.5 font-extrabold text-xl text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus-visible:outline-none shrink-0 cursor-pointer"
+              className="flex items-center gap-2.5 font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus-visible:outline-none shrink-0 cursor-pointer"
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-xs">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-slate-900 dark:bg-blue-600 rounded-xl flex items-center justify-center shadow-xs text-white">
                 <PdfLogo />
               </div>
-              <span className="tracking-tight">PDF Tools</span>
+              <span className="tracking-tight font-extrabold">Easy PDF Tools</span>
             </button>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {QUICK_NAV.map((item) => (
                 <button
                   key={item.path}
@@ -130,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   className={[
                     'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer',
                     path === item.path
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold'
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold shadow-2xs'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
                   ].join(' ')}
                 >
@@ -149,7 +145,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
                   ].join(' ')}
                 >
-                  <span>All Tools</span>
+                  <span>More Tools</span>
                   <svg className={`w-3.5 h-3.5 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -157,10 +153,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
                 {/* Dropdown Menu Popup */}
                 {dropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xl grid grid-cols-2 gap-4 z-50 animate-fadeIn">
+                  <div className="absolute top-full right-0 lg:left-0 mt-2 w-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xl grid grid-cols-2 gap-3 z-50 animate-fadeIn">
                     {TOOL_CATEGORIES.map((cat) => (
-                      <div key={cat.category} className="space-y-1.5">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2">
+                      <div key={cat.category} className="space-y-1">
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2">
                           {cat.category}
                         </h4>
                         <div className="space-y-0.5">
@@ -172,13 +168,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 setDropdownOpen(false)
                               }}
                               className={[
-                                'w-full text-left px-2 py-1.5 rounded-xl transition-all block cursor-pointer',
+                                'w-full text-left px-2.5 py-1.5 rounded-xl transition-all block cursor-pointer',
                                 path === tool.path
-                                  ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400'
+                                  ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-semibold'
                                   : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200',
                               ].join(' ')}
                             >
-                              <p className="text-xs font-bold">{tool.label}</p>
+                              <p className="text-xs font-semibold">{tool.label}</p>
                               <p className="text-[10px] text-slate-500 dark:text-slate-400">{tool.desc}</p>
                             </button>
                           ))}
@@ -190,35 +186,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </nav>
 
-            {/* Right Action Controls: Theme Toggle & GitHub & Mobile Menu */}
+            {/* Right Controls: Theme Toggle & GitHub */}
             <div className="flex items-center gap-2">
-              {/* Dark / Light Theme Toggle */}
+              {/* Dark / Light Mode Toggle Button */}
               <button
                 onClick={toggleTheme}
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer"
+                className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
                 title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
               >
-                {theme === 'dark' ? <SunIcon className="w-4 h-4 text-amber-400" /> : <MoonIcon className="w-4 h-4 text-slate-600" />}
+                {theme === 'dark' ? (
+                  <SunIcon className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <MoonIcon className="w-4 h-4 text-slate-600" />
+                )}
               </button>
 
-              {/* Open Source GitHub Badge */}
+              {/* GitHub Button */}
               <a
                 href="https://github.com/teshan200/PDF-Tools"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all"
                 title="100% Free & Open Source on GitHub"
               >
                 <GithubIcon />
                 <span>Open Source</span>
               </a>
 
-              {/* Mobile menu toggle button */}
+              {/* Mobile Drawer Button */}
               <button
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-label="Toggle menu"
-                className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                className="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {menuOpen ? (
@@ -234,16 +234,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Navigation Drawer */}
         {menuOpen && (
-          <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 space-y-4">
+          <div className="lg:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 space-y-4">
             <div className="grid grid-cols-2 gap-2">
               {TOOL_CATEGORIES.flatMap((c) => c.items).map((item) => (
                 <button
                   key={item.path}
                   onClick={() => { navigate(item.path); setMenuOpen(false) }}
                   className={[
-                    'p-2.5 rounded-xl text-left transition-all block',
+                    'p-2.5 rounded-xl text-left transition-all block cursor-pointer',
                     path === item.path
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold'
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800',
                   ].join(' ')}
                 >
@@ -252,7 +252,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               ))}
             </div>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <a
                 href="https://github.com/teshan200/PDF-Tools"
                 target="_blank"
@@ -267,17 +267,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      {/* ── Main Content ─────────────────────────────────── */}
+      {/* ── Main View Container ─────────────────────────────────── */}
       <main className="flex-1">{children}</main>
 
-      {/* ── Professional 4-Column Footer ───────────────────────────────── */}
+      {/* ── Modern 4-Column Footer ───────────────────────────────── */}
       <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mt-16 text-xs text-slate-600 dark:text-slate-400 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100 dark:border-slate-800">
             {/* Column 1: Brand & Open Source */}
             <div className="space-y-3 md:col-span-1">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-xs">
+                <div className="w-7 h-7 bg-slate-900 dark:bg-blue-600 rounded-lg flex items-center justify-center shadow-xs text-white">
                   <PdfLogo />
                 </div>
                 <span className="font-extrabold text-slate-900 dark:text-white text-sm">Easy PDF Tools</span>
@@ -314,15 +314,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="space-y-2.5">
               <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Convert &amp; Security</h4>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
-                <li><button onClick={() => navigate('/word')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to Word</button></li>
                 <li><button onClick={() => navigate('/jpg')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to JPG</button></li>
+                <li><button onClick={() => navigate('/word')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to Word</button></li>
                 <li><button onClick={() => navigate('/rotate')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Rotate PDF</button></li>
                 <li><button onClick={() => navigate('/protect')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Protect PDF</button></li>
                 <li><button onClick={() => navigate('/unlock')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Unlock PDF</button></li>
               </ul>
             </div>
 
-            {/* Column 4: Legal & Company (Google AdSense Requirements) */}
+            {/* Column 4: Legal & Company */}
             <div className="space-y-2.5">
               <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Company &amp; Legal</h4>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
