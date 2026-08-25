@@ -1,6 +1,6 @@
 # Easy PDF Tools
 
-A fast, modern, and free full-stack PDF utility web application with **9 essential tools** — built with React 19, Vite, Tailwind CSS v4, PDF.js, pdf-lib, and Netlify Serverless Functions.
+A fast, modern, and free full-stack PDF utility web application with **10 essential tools** — built with React 19, Vite, Tailwind CSS v4, PDF.js, pdf-lib, and Netlify Serverless Functions.
 
 Live App: [https://easypdftools.xyz/](https://easypdftools.xyz/)
 
@@ -12,6 +12,7 @@ Developed by **Teshan Pamodya** • [Website](https://teshan.click) • [GitHub]
 
 | Tool | Description |
 |---|---|
+| ✍️ **Sign PDF** | Draw, type, or upload your digital signature, add date stamps & checkmarks, and sign documents directly in your browser. |
 | ✏️ **Edit PDF** | Click any original text in the PDF to edit/replace paragraphs in place, whiteout unwanted content, insert images & digital signatures, and draw freehand notes. |
 | 🔀 **Merge PDF** | Combine multiple PDF files into a single document with custom ordering. |
 | ✂️ **Split PDF** | Extract page ranges, split by intervals (every N pages), or split into individual pages. |

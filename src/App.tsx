@@ -10,18 +10,20 @@ import RotatePDF from './pages/RotatePDF'
 import ProtectPDF from './pages/ProtectPDF'
 import UnlockPDF from './pages/UnlockPDF'
 import EditPDF from './pages/EditPDF'
+import SignPDF from './pages/SignPDF'
 
 const ROUTES: Record<string, React.ComponentType> = {
   '/': Home,
   '/merge': MergePDF,
   '/split': SplitPDF,
   '/compress': CompressPDF,
+  '/edit': EditPDF,
+  '/sign': SignPDF,
   '/word': PDFtoWord,
   '/jpg': PDFtoJPG,
   '/rotate': RotatePDF,
   '/protect': ProtectPDF,
   '/unlock': UnlockPDF,
-  '/edit': EditPDF,
 }
 
 function Routes() {
