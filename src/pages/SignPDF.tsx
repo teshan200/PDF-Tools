@@ -958,6 +958,20 @@ export default function SignPDF() {
               <p className="text-[11px] text-slate-500 mt-0.5">Prevents extracting or modifying signatures</p>
             </div>
           </div>
+
+          {/* How It Works & Privacy Guarantee Callout */}
+          <div className="p-4 bg-emerald-50/80 border border-emerald-200/90 rounded-2xl flex items-start gap-3">
+            <span className="text-2xl shrink-0">🛡️</span>
+            <div className="space-y-1 text-xs">
+              <p className="font-bold text-emerald-950">How It Works &amp; Privacy Guarantee (0 Bytes Uploaded)</p>
+              <p className="text-emerald-800 leading-relaxed">
+                This tool runs <strong>100% inside your web browser</strong> using Web Workers and Web Crypto API. Your contracts, sensitive legal forms, and real signatures <strong>never leave your computer</strong> and are never sent to any server or cloud database.
+              </p>
+              <p className="text-[11px] text-emerald-700 font-semibold pt-0.5">
+                💡 <strong>Try it:</strong> Disconnect your internet connection after opening this page — the entire signing process continues working completely offline!
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         /* ── Signature Studio Workspace ── */

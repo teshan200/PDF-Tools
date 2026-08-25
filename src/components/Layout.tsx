@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRouter } from '../router'
+import SecurityModal from './SecurityModal'
 
 const NAV_ITEMS = [
   { path: '/merge', label: 'Merge PDF' },
@@ -54,6 +55,7 @@ function LinkedinIcon() {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { path, navigate } = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [securityModalOpen, setSecurityModalOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -90,20 +92,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
 
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Toggle menu"
-              className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {menuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
+            {/* Privacy Shield Badge & Mobile Menu Button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSecurityModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 border border-emerald-200 text-emerald-800 rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                title="Click to view Privacy & Security Architecture"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="hidden md:inline">100% Private (0b uploaded)</span>
+                <span className="md:hidden">100% Private</span>
+                <span className="text-[10px] bg-emerald-200/80 px-1 py-0.2 rounded text-emerald-900 font-bold">Info</span>
+              </button>
+
+              {/* Mobile menu toggle */}
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="Toggle menu"
+                className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {menuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -135,7 +151,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-slate-200 bg-white mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo & Copyright */}
+            {/* Logo, Privacy & Copyright */}
             <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-xs">
@@ -144,9 +160,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <span className="font-bold text-slate-800">PDF Tools</span>
               </div>
               <span className="hidden sm:inline text-slate-300">|</span>
-              <p className="text-xs text-slate-500">
-                Files are processed securely in real-time and never stored.
-              </p>
+              <button
+                onClick={() => setSecurityModalOpen(true)}
+                className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>🛡️ Security &amp; Privacy Guarantee (0b uploaded)</span>
+              </button>
             </div>
 
             {/* Developer Credits & Socials */}
@@ -191,6 +210,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
+
+      {/* Security & How It Works Modal */}
+      <SecurityModal
+        isOpen={securityModalOpen}
+        onClose={() => setSecurityModalOpen(false)}
+      />
     </div>
   )
 }
