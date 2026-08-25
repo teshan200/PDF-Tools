@@ -74,12 +74,15 @@ export default function ToolPageLayout({
   return (
     <div>
       {/* Hero banner */}
-      <div className={`bg-gradient-to-br ${c.hero} text-white py-10 sm:py-14 px-4`}>
-        <div className="max-w-3xl mx-auto">
+      <div className={`relative overflow-hidden bg-gradient-to-br ${c.hero} dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 text-white py-10 sm:py-14 px-4 border-b border-transparent dark:border-slate-800 transition-colors duration-200`}>
+        {/* Ambient Dark Mode Radial Glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent dark:from-blue-600/10 pointer-events-none" />
+
+        <div className="max-w-3xl mx-auto relative z-10">
           {/* Breadcrumb */}
           <button
             onClick={() => navigate('/')}
-            className={`flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors ${c.back}`}
+            className={`flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors ${c.back} dark:text-slate-400 dark:hover:text-white cursor-pointer`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -89,12 +92,12 @@ export default function ToolPageLayout({
 
           {/* Title row */}
           <div className="flex items-center gap-5">
-            <div className={`w-14 h-14 sm:w-16 sm:h-16 ${c.iconBg} rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm`}>
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 ${c.iconBg} dark:bg-slate-800 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm shadow-sm`}>
               <div className="text-white">{icon}</div>
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{title}</h1>
-              <p className="text-white/70 mt-1 text-sm sm:text-base">{description}</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white dark:text-slate-100">{title}</h1>
+              <p className="text-white/80 dark:text-slate-400 mt-1 text-sm sm:text-base">{description}</p>
             </div>
           </div>
         </div>

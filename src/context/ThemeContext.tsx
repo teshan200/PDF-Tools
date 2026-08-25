@@ -29,6 +29,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('easypdf_theme', theme)
   }, [theme])
 
+  // Listen to OS system theme changes
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (e: MediaQueryListEvent) => {
+      const saved = localStorage.getItem('easypdf_theme')
+      if (!saved) {
+        setTheme(e.matches ? 'dark' : 'light')
+      }
+    }
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [])
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
   }

@@ -160,23 +160,26 @@ export default function Home() {
   return (
     <div>
       {/* ── Hero ─────────────────────────────── */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 text-white py-20 sm:py-28 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-100 mb-6">
+      <div className="relative overflow-hidden bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-950 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 text-white py-20 sm:py-28 px-4 border-b border-blue-800/40 dark:border-slate-800/80 transition-colors duration-200">
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent dark:from-blue-600/15 pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white/10 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-100 dark:text-slate-300 mb-6 shadow-xs">
             10 Free PDF Tools — No Signup Required
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 tracking-tight leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 tracking-tight leading-tight text-white dark:text-slate-100">
             All Your PDF Tools
             <br />
-            <span className="text-blue-200">in One Place</span>
+            <span className="text-blue-200 dark:text-blue-400">in One Place</span>
           </h1>
-          <p className="text-lg sm:text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-blue-100 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Merge, split, compress, edit, sign, convert, rotate, protect and unlock PDF files.
             Fast, secure, and completely free.
           </p>
           <button
             onClick={() => navigate('/merge')}
-            className="mt-8 inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-7 py-3.5 rounded-xl hover:bg-blue-50 active:bg-blue-100 transition-colors shadow-lg shadow-blue-900/30 text-base"
+            className="mt-8 inline-flex items-center gap-2 bg-white dark:bg-blue-600 text-blue-700 dark:text-white font-bold px-7 py-3.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-500 active:bg-blue-100 transition-all shadow-lg shadow-blue-900/30 dark:shadow-blue-950/50 text-base cursor-pointer"
           >
             Get Started
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

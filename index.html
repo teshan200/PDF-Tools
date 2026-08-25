@@ -83,8 +83,30 @@
         }
       }
     </script>
+
+    <!-- Theme Initialization to prevent Flash of Unstyled Theme -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('easypdf_theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (saved === 'dark' || (!saved && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
+    <!-- Hidden form definition for Netlify Forms bot crawling -->
+    <form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <textarea name="message"></textarea>
+    </form>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
