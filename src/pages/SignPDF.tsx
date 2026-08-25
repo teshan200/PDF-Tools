@@ -55,9 +55,15 @@ function hexToRgb(hex: string) {
   return rgb(r, g, b)
 }
 
-async function dataUrlToBytes(dataUrl: string): Promise<ArrayBuffer> {
-  const res = await fetch(dataUrl)
-  return res.arrayBuffer()
+function dataUrlToBytes(dataUrl: string): Uint8Array {
+  const parts = dataUrl.split(',')
+  const base64 = parts.length > 1 ? parts[1] : parts[0]
+  const binary = window.atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
 }
 
 export default function SignPDF() {
@@ -840,6 +846,18 @@ export default function SignPDF() {
       const url = URL.createObjectURL(blob)
       setDownloadUrl(url)
       setIsProcessing(false)
+
+      // Auto-trigger direct browser download
+      try {
+        const a = document.createElement('a')
+        a.href = url
+        a.download = downloadName
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      } catch (dlErr) {
+        console.warn('Auto download popup blocked, download button available:', dlErr)
+      }
     } catch (err: any) {
       console.error('Failed to export signed PDF:', err)
       setErrorMsg('Error generating signed PDF: ' + (err?.message || 'Unknown error'))
@@ -944,6 +962,7 @@ export default function SignPDF() {
       ) : (
         /* ── Signature Studio Workspace ── */
         <div className="space-y-3" ref={containerRef}>
+          {errorMsg && <ErrorMessage message={errorMsg} onRetry={() => setErrorMsg(null)} />}
           {/* Main Top Studio Toolbar */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-2 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
             {/* Signature & Quick Stamp Actions */}
