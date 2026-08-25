@@ -1,17 +1,52 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from '../router'
+import { useTheme } from '../context/ThemeContext'
+import { SunIcon, MoonIcon } from './Icons'
 
-const NAV_ITEMS = [
-  { path: '/merge', label: 'Merge PDF' },
-  { path: '/split', label: 'Split PDF' },
-  { path: '/compress', label: 'Compress' },
+interface ToolItem {
+  path: string
+  label: string
+  desc: string
+}
+
+const TOOL_CATEGORIES = [
+  {
+    category: 'Edit & Sign',
+    items: [
+      { path: '/edit', label: 'Edit PDF', desc: 'Edit text, whiteout & draw' },
+      { path: '/sign', label: 'Sign PDF', desc: 'Sign with digital signatures' },
+    ],
+  },
+  {
+    category: 'Organize',
+    items: [
+      { path: '/merge', label: 'Merge PDF', desc: 'Combine multiple PDFs into one' },
+      { path: '/split', label: 'Split PDF', desc: 'Extract or separate pages' },
+      { path: '/rotate', label: 'Rotate PDF', desc: 'Rotate pages by 90° or 180°' },
+    ],
+  },
+  {
+    category: 'Convert & Optimize',
+    items: [
+      { path: '/compress', label: 'Compress PDF', desc: 'Reduce file size efficiently' },
+      { path: '/word', label: 'PDF to Word', desc: 'Convert PDF to editable DOCX' },
+      { path: '/jpg', label: 'PDF to JPG', desc: 'Extract pages as high-res JPGs' },
+    ],
+  },
+  {
+    category: 'Security',
+    items: [
+      { path: '/protect', label: 'Protect PDF', desc: 'Add password encryption' },
+      { path: '/unlock', label: 'Unlock PDF', desc: 'Remove password protection' },
+    ],
+  },
+]
+
+const QUICK_NAV = [
   { path: '/edit', label: 'Edit PDF' },
   { path: '/sign', label: 'Sign PDF' },
-  { path: '/word', label: 'PDF to Word' },
-  { path: '/jpg', label: 'PDF to JPG' },
-  { path: '/rotate', label: 'Rotate PDF' },
-  { path: '/protect', label: 'Protect PDF' },
-  { path: '/unlock', label: 'Unlock PDF' },
+  { path: '/merge', label: 'Merge PDF' },
+  { path: '/compress', label: 'Compress' },
 ]
 
 function PdfLogo() {
@@ -53,62 +88,137 @@ function LinkedinIcon() {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { path, navigate } = useRouter()
+  const { theme, toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* ── Header ───────────────────────────────── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
+      {/* ── Modern Navigation Header ───────────────────────────────── */}
+      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <button
               onClick={() => { navigate('/'); setMenuOpen(false) }}
-              className="flex items-center gap-2.5 font-extrabold text-xl text-slate-900 hover:text-blue-700 transition-colors focus-visible:outline-none"
+              className="flex items-center gap-2.5 font-extrabold text-xl text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus-visible:outline-none shrink-0 cursor-pointer"
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-xs">
                 <PdfLogo />
               </div>
-              PDF Tools
+              <span className="tracking-tight">PDF Tools</span>
             </button>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-0.5 overflow-x-auto">
-              {NAV_ITEMS.map((item) => (
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-1">
+              {QUICK_NAV.map((item) => (
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
                   className={[
-                    'px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer',
                     path === item.path
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
                   ].join(' ')}
                 >
                   {item.label}
                 </button>
               ))}
+
+              {/* All Tools Mega Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  className={[
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer',
+                    dropdownOpen
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
+                  ].join(' ')}
+                >
+                  <span>All Tools</span>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu Popup */}
+                {dropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xl grid grid-cols-2 gap-4 z-50 animate-fadeIn">
+                    {TOOL_CATEGORIES.map((cat) => (
+                      <div key={cat.category} className="space-y-1.5">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2">
+                          {cat.category}
+                        </h4>
+                        <div className="space-y-0.5">
+                          {cat.items.map((tool) => (
+                            <button
+                              key={tool.path}
+                              onClick={() => {
+                                navigate(tool.path)
+                                setDropdownOpen(false)
+                              }}
+                              className={[
+                                'w-full text-left px-2 py-1.5 rounded-xl transition-all block cursor-pointer',
+                                path === tool.path
+                                  ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400'
+                                  : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200',
+                              ].join(' ')}
+                            >
+                              <p className="text-xs font-bold">{tool.label}</p>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400">{tool.desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </nav>
 
-            {/* Open Source GitHub Badge & Mobile Menu Button */}
-            <div className="flex items-center gap-2.5">
+            {/* Right Action Controls: Theme Toggle & GitHub & Mobile Menu */}
+            <div className="flex items-center gap-2">
+              {/* Dark / Light Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer"
+                title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+              >
+                {theme === 'dark' ? <SunIcon className="w-4 h-4 text-amber-400" /> : <MoonIcon className="w-4 h-4 text-slate-600" />}
+              </button>
+
+              {/* Open Source GitHub Badge */}
               <a
                 href="https://github.com/teshan200/PDF-Tools"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-bold shadow-xs hover:shadow transition-all"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all"
                 title="100% Free & Open Source on GitHub"
               >
                 <GithubIcon />
-                <span className="hidden sm:inline">⭐ Open Source</span>
-                <span className="sm:hidden">⭐ GitHub</span>
+                <span>Open Source</span>
               </a>
 
-              {/* Mobile menu toggle */}
+              {/* Mobile menu toggle button */}
               <button
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-label="Toggle menu"
-                className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {menuOpen ? (
@@ -122,43 +232,57 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Mobile drawer */}
+        {/* Mobile Navigation Drawer */}
         {menuOpen && (
-          <div className="lg:hidden border-t border-slate-100 bg-white px-4 py-3 grid grid-cols-2 gap-1.5">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => { navigate(item.path); setMenuOpen(false) }}
-                className={[
-                  'px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all',
-                  path === item.path
-                    ? 'bg-blue-50 text-blue-700 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-100',
-                ].join(' ')}
+          <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              {TOOL_CATEGORIES.flatMap((c) => c.items).map((item) => (
+                <button
+                  key={item.path}
+                  onClick={() => { navigate(item.path); setMenuOpen(false) }}
+                  className={[
+                    'p-2.5 rounded-xl text-left transition-all block',
+                    path === item.path
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800',
+                  ].join(' ')}
+                >
+                  <p className="text-xs font-semibold">{item.label}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <a
+                href="https://github.com/teshan200/PDF-Tools"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:underline"
               >
-                {item.label}
-              </button>
-            ))}
+                <GithubIcon />
+                <span>GitHub Repository ↗</span>
+              </a>
+            </div>
           </div>
         )}
       </header>
 
-      {/* ── Main ─────────────────────────────────── */}
+      {/* ── Main Content ─────────────────────────────────── */}
       <main className="flex-1">{children}</main>
 
-      {/* ── Footer ───────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-white mt-16 text-xs text-slate-600">
+      {/* ── Professional 4-Column Footer ───────────────────────────────── */}
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mt-16 text-xs text-slate-600 dark:text-slate-400 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100 dark:border-slate-800">
             {/* Column 1: Brand & Open Source */}
             <div className="space-y-3 md:col-span-1">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-xs">
                   <PdfLogo />
                 </div>
-                <span className="font-extrabold text-slate-900 text-sm">Easy PDF Tools</span>
+                <span className="font-extrabold text-slate-900 dark:text-white text-sm">Easy PDF Tools</span>
               </div>
-              <p className="text-slate-500 leading-relaxed text-[11px]">
+              <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-[11px]">
                 Free, fast, and 100% private in-browser PDF editor, signer, and converter with zero server file storage.
               </p>
               <div className="pt-1">
@@ -166,55 +290,55 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   href="https://github.com/teshan200/PDF-Tools"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-[11px] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-[11px] transition-colors"
                 >
                   <GithubIcon />
-                  <span>⭐ Public GitHub Repository</span>
+                  <span>Public GitHub Repository</span>
                 </a>
               </div>
             </div>
 
             {/* Column 2: Popular Tools */}
             <div className="space-y-2.5">
-              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">PDF Tools</h4>
-              <ul className="space-y-1.5 text-slate-500">
-                <li><button onClick={() => navigate('/edit')} className="hover:text-blue-600 transition-colors">Edit PDF</button></li>
-                <li><button onClick={() => navigate('/sign')} className="hover:text-blue-600 transition-colors">Sign PDF</button></li>
-                <li><button onClick={() => navigate('/merge')} className="hover:text-blue-600 transition-colors">Merge PDF</button></li>
-                <li><button onClick={() => navigate('/split')} className="hover:text-blue-600 transition-colors">Split PDF</button></li>
-                <li><button onClick={() => navigate('/compress')} className="hover:text-blue-600 transition-colors">Compress PDF</button></li>
+              <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">PDF Tools</h4>
+              <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
+                <li><button onClick={() => navigate('/edit')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Edit PDF</button></li>
+                <li><button onClick={() => navigate('/sign')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Sign PDF</button></li>
+                <li><button onClick={() => navigate('/merge')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Merge PDF</button></li>
+                <li><button onClick={() => navigate('/split')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Split PDF</button></li>
+                <li><button onClick={() => navigate('/compress')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Compress PDF</button></li>
               </ul>
             </div>
 
             {/* Column 3: More Tools */}
             <div className="space-y-2.5">
-              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Convert &amp; Security</h4>
-              <ul className="space-y-1.5 text-slate-500">
-                <li><button onClick={() => navigate('/word')} className="hover:text-blue-600 transition-colors">PDF to Word</button></li>
-                <li><button onClick={() => navigate('/jpg')} className="hover:text-blue-600 transition-colors">PDF to JPG</button></li>
-                <li><button onClick={() => navigate('/rotate')} className="hover:text-blue-600 transition-colors">Rotate PDF</button></li>
-                <li><button onClick={() => navigate('/protect')} className="hover:text-blue-600 transition-colors">Protect PDF</button></li>
-                <li><button onClick={() => navigate('/unlock')} className="hover:text-blue-600 transition-colors">Unlock PDF</button></li>
+              <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Convert &amp; Security</h4>
+              <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
+                <li><button onClick={() => navigate('/word')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to Word</button></li>
+                <li><button onClick={() => navigate('/jpg')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to JPG</button></li>
+                <li><button onClick={() => navigate('/rotate')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Rotate PDF</button></li>
+                <li><button onClick={() => navigate('/protect')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Protect PDF</button></li>
+                <li><button onClick={() => navigate('/unlock')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Unlock PDF</button></li>
               </ul>
             </div>
 
             {/* Column 4: Legal & Company (Google AdSense Requirements) */}
             <div className="space-y-2.5">
-              <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Company &amp; Legal</h4>
-              <ul className="space-y-1.5 text-slate-500">
-                <li><button onClick={() => navigate('/about')} className="hover:text-blue-600 transition-colors">About Us</button></li>
-                <li><button onClick={() => navigate('/privacy')} className="hover:text-blue-600 transition-colors">Privacy Policy</button></li>
-                <li><button onClick={() => navigate('/terms')} className="hover:text-blue-600 transition-colors">Terms of Service</button></li>
-                <li><button onClick={() => navigate('/contact')} className="hover:text-blue-600 transition-colors">Contact Us</button></li>
+              <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Company &amp; Legal</h4>
+              <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
+                <li><button onClick={() => navigate('/about')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">About Us</button></li>
+                <li><button onClick={() => navigate('/privacy')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/terms')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Terms of Service</button></li>
+                <li><button onClick={() => navigate('/contact')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Contact Us</button></li>
               </ul>
             </div>
           </div>
 
           {/* Bottom Row */}
           <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-slate-400 text-[11px]">
+            <p className="text-slate-400 dark:text-slate-500 text-[11px]">
               &copy; {new Date().getFullYear()} Easy PDF Tools (easypdftools.xyz) • Developed by{' '}
-              <a href="https://teshan.click" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-700 hover:underline">
+              <a href="https://teshan.click" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-700 dark:text-slate-300 hover:underline">
                 Teshan Pamodya
               </a>
             </p>
@@ -225,7 +349,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Website"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[11px]"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors text-[11px]"
               >
                 <GlobeIcon />
                 <span>teshan.click</span>
@@ -235,7 +359,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[11px]"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors text-[11px]"
               >
                 <GithubIcon />
                 <span>GitHub</span>
@@ -245,7 +369,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors text-[11px]"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium transition-colors text-[11px]"
               >
                 <LinkedinIcon />
                 <span>LinkedIn</span>

@@ -189,8 +189,8 @@ export default function Home() {
       {/* ── Tools Grid ───────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Choose a Tool</h2>
-          <p className="text-slate-500 mt-2 text-base">Select any tool below to get started instantly</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Choose a Tool</h2>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-base">Select any tool below to get started instantly</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {TOOLS.map((tool) => (
@@ -200,16 +200,16 @@ export default function Home() {
       </div>
 
       {/* ── Features ─────────────────────────── */}
-      <div className="bg-white border-t border-b border-slate-100 py-16 px-4">
+      <div className="bg-white dark:bg-slate-900 border-t border-b border-slate-100 dark:border-slate-800 py-16 px-4 transition-colors duration-200">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
             {FEATURES.map((f) => (
               <div key={f.title} className="flex flex-col items-center text-center gap-3">
-                <div className={`w-12 h-12 ${f.bg} rounded-xl flex items-center justify-center`}>
+                <div className={`w-12 h-12 ${f.bg} dark:bg-slate-800 rounded-xl flex items-center justify-center`}>
                   {f.icon}
                 </div>
-                <h3 className="font-bold text-slate-900 text-base">{f.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{f.body}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">{f.title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{f.body}</p>
               </div>
             ))}
           </div>

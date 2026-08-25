@@ -44,10 +44,14 @@ function Routes() {
   )
 }
 
+import { ThemeProvider } from './context/ThemeContext'
+
 export default function App() {
   return (
-    <RouterProvider>
-      <Routes />
-    </RouterProvider>
+    <ThemeProvider>
+      <RouterProvider>
+        <Routes />
+      </RouterProvider>
+    </ThemeProvider>
   )
 }
