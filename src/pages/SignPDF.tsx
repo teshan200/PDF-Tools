@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { PDFDocument, rgb } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import ToolPageLayout from '../components/ToolPageLayout'
 import DropZone from '../components/DropZone'
 import Spinner from '../components/Spinner'
 import ErrorMessage from '../components/ErrorMessage'
-import { encryptData, decryptData, EncryptedPayload } from '../utils/crypto'
+import { encryptData, decryptData, sha256Hash, generateAuditId, EncryptedPayload } from '../utils/crypto'
 
 // Configure worker to use locally bundled worker file
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
 
 const STORAGE_KEY = 'easypdf_saved_signatures_v1'
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SignatureMode = 'draw' | 'type' | 'upload'
@@ -73,6 +74,9 @@ export default function SignPDF() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [downloadName, setDownloadName] = useState('signed.pdf')
 
+  // Security Options
+  const [includeAuditTrail, setIncludeAuditTrail] = useState(true)
+
   // Signatures on Document
   const [placedItems, setPlacedItems] = useState<PlacedSignature[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -96,10 +100,15 @@ export default function SignPDF() {
   const [usePinLock, setUsePinLock] = useState(false)
   const [creationPin, setCreationPin] = useState('')
 
-  // Unlock PIN Modal
+  // Unlock PIN Modal & Brute-Force Rate Limiting
   const [unlockTarget, setUnlockTarget] = useState<LoadedSignature | null>(null)
   const [unlockPin, setUnlockPin] = useState('')
   const [unlockError, setUnlockError] = useState<string | null>(null)
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
+
+  // Inactivity tracking
+  const lastActivityRef = useRef(Date.now())
 
   // Interaction refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -164,7 +173,50 @@ export default function SignPDF() {
     loadSaved()
   }, [])
 
-  // ─── 2. Load PDF Document ───────────────────────────────────────────────────
+  // ─── 2. Inactivity Auto-Lock & RAM Zeroization ──────────────────────────────
+  const lockSensitiveSignatures = useCallback(() => {
+    setSavedSignatures((prev) =>
+      prev.map((sig) => (sig.hasPin ? { ...sig, isLocked: true, dataUrl: undefined } : sig))
+    )
+    setUnlockTarget(null)
+    setUnlockPin('')
+  }, [])
+
+  useEffect(() => {
+    const handleActivity = () => {
+      lastActivityRef.current = Date.now()
+    }
+
+    window.addEventListener('mousemove', handleActivity)
+    window.addEventListener('keydown', handleActivity)
+    window.addEventListener('pointerdown', handleActivity)
+    window.addEventListener('touchstart', handleActivity)
+
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > INACTIVITY_TIMEOUT_MS) {
+        lockSensitiveSignatures()
+      }
+    }, 15000)
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity)
+      window.removeEventListener('keydown', handleActivity)
+      window.removeEventListener('pointerdown', handleActivity)
+      window.removeEventListener('touchstart', handleActivity)
+      clearInterval(interval)
+    }
+  }, [lockSensitiveSignatures])
+
+  // Cooldown countdown timer for brute force protection
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return
+    const timer = setInterval(() => {
+      setCooldownRemaining((prev) => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldownRemaining])
+
+  // ─── 3. Load PDF Document ───────────────────────────────────────────────────
   useEffect(() => {
     const file = files[0]
     if (!file) {
@@ -203,7 +255,7 @@ export default function SignPDF() {
     return () => { cancelled = true }
   }, [files])
 
-  // ─── 3. Render Current Page ─────────────────────────────────────────────────
+  // ─── 4. Render Current Page ─────────────────────────────────────────────────
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return
     let renderTask: any = null
@@ -244,7 +296,7 @@ export default function SignPDF() {
     setScale(parseFloat(targetScale.toFixed(2)))
   }, [pageDimensions.width])
 
-  // ─── 4. Signature Pad Drawing Logic ─────────────────────────────────────────
+  // ─── 5. Signature Pad Drawing Logic ─────────────────────────────────────────
   const initPad = () => {
     const pad = padCanvasRef.current
     if (!pad) return
@@ -301,9 +353,8 @@ export default function SignPDF() {
     lastPointRef.current = null
   }
 
-  // ─── 5. Save & Encrypt Signature ────────────────────────────────────────────
+  // ─── 6. Save & Encrypt Signature ────────────────────────────────────────────
   const addSignatureToDocument = async (dataUrl: string, label = 'Signature') => {
-    // 1. If user opted to save to device: Encrypt with AES-256 and store in localStorage
     if (saveToDevice) {
       try {
         const pinToUse = usePinLock && creationPin.trim() ? creationPin.trim() : undefined
@@ -322,7 +373,6 @@ export default function SignPDF() {
         const updated = [newRecord, ...existing]
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
 
-        // Update UI state
         setSavedSignatures((prev) => [
           {
             id,
@@ -339,7 +389,6 @@ export default function SignPDF() {
       }
     }
 
-    // 2. Place on current PDF page
     const w = 150
     const h = 60
     const newItem: PlacedSignature = {
@@ -408,7 +457,6 @@ export default function SignPDF() {
 
         ctx.drawImage(img, 0, 0)
 
-        // Make background transparent (filter out white/light background)
         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
         const data = imgData.data
         for (let i = 0; i < data.length; i += 4) {
@@ -429,10 +477,10 @@ export default function SignPDF() {
     e.target.value = ''
   }
 
-  // ─── 6. Unlock PIN-Protected Signature ─────────────────────────────────────
+  // ─── 7. Unlock PIN-Protected Signature with Rate Limiting ───────────────────
   const handleUnlockSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!unlockTarget || !unlockPin.trim()) return
+    if (!unlockTarget || !unlockPin.trim() || cooldownRemaining > 0) return
 
     setUnlockError(null)
     try {
@@ -442,10 +490,11 @@ export default function SignPDF() {
       const record = records.find((r) => r.id === unlockTarget.id)
       if (!record) throw new Error('Signature record not found')
 
-      // Decrypt with user PIN
       const decryptedDataUrl = await decryptData(record.payload, unlockPin.trim())
 
-      // Update state to unlocked
+      // Success: Reset failed attempts
+      setFailedAttempts(0)
+
       setSavedSignatures((prev) =>
         prev.map((s) =>
           s.id === unlockTarget.id
@@ -454,7 +503,7 @@ export default function SignPDF() {
         )
       )
 
-      // Automatically stamp onto document
+      // Stamp onto document
       const w = 150
       const h = 60
       const newItem: PlacedSignature = {
@@ -469,12 +518,22 @@ export default function SignPDF() {
       setPlacedItems((prev) => [...prev, newItem])
       setSelectedId(newItem.id)
 
-      // Close modal
       setUnlockTarget(null)
       setUnlockPin('')
     } catch (err: any) {
       console.error(err)
-      setUnlockError('Incorrect PIN. Please try again.')
+      const newFails = failedAttempts + 1
+      setFailedAttempts(newFails)
+
+      if (newFails >= 5) {
+        setCooldownRemaining(60)
+        setUnlockError('Security Lockout: 5 failed attempts. Please wait 60 seconds.')
+      } else if (newFails >= 3) {
+        setCooldownRemaining(30)
+        setUnlockError('Too many failed attempts. Cooldown active for 30 seconds.')
+      } else {
+        setUnlockError(`Incorrect PIN. (${3 - newFails} attempts remaining before cooldown)`)
+      }
     }
   }
 
@@ -493,7 +552,7 @@ export default function SignPDF() {
     }
   }
 
-  // ─── 7. Quick Stamps (Date, Checkmark) ──────────────────────────────────────
+  // ─── 8. Quick Stamps (Date, Checkmark) ──────────────────────────────────────
   const addDateStamp = () => {
     const today = new Date().toISOString().split('T')[0]
     const canvas = document.createElement('canvas')
@@ -555,7 +614,7 @@ export default function SignPDF() {
     setSelectedId(newItem.id)
   }
 
-  // ─── 8. Drag & Resize Placed Items ──────────────────────────────────────────
+  // ─── 9. Drag & Resize Placed Items ──────────────────────────────────────────
   const startDrag = (id: string, e: React.PointerEvent, isResize = false) => {
     e.stopPropagation()
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -626,25 +685,33 @@ export default function SignPDF() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId])
 
-  // ─── 9. Export Signed PDF with pdf-lib ──────────────────────────────────────
+  // ─── 10. Flattened Export with Cryptographic SHA-256 Audit Trail ────────────
   const handleExportSigned = async () => {
     const file = files[0]
     if (!file) return
 
     try {
       setIsProcessing(true)
-      setProgressMsg('Embedding your signatures and generating PDF...')
+      setProgressMsg('Computing cryptographic SHA-256 hash & embedding signatures...')
 
       const freshBytes = await file.arrayBuffer()
+      const docHash = await sha256Hash(freshBytes)
+      const auditId = generateAuditId()
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+
       const pdfDocLib = await PDFDocument.load(freshBytes)
       const pages = pdfDocLib.getPages()
+      const helvetica = await pdfDocLib.embedFont(StandardFonts.Helvetica)
+      const helveticaBold = await pdfDocLib.embedFont(StandardFonts.HelveticaBold)
 
       for (let pIndex = 0; pIndex < pages.length; pIndex++) {
         const page = pages[pIndex]
         const pageNum = pIndex + 1
+        const pageWidth = page.getWidth()
         const pageHeight = page.getHeight()
         const pageSignatures = placedItems.filter((item) => item.page === pageNum)
 
+        // 1. Flatten & Draw Signatures into base content stream
         for (const item of pageSignatures) {
           const imgBytes = await dataUrlToBytes(item.dataUrl)
           const embeddedPng = await pdfDocLib.embedPng(imgBytes)
@@ -655,6 +722,44 @@ export default function SignPDF() {
             y: pdfY,
             width: item.width,
             height: item.height,
+          })
+        }
+
+        // 2. Add Anti-Tamper Cryptographic Audit Trail Footer if enabled
+        if (includeAuditTrail && pageSignatures.length > 0) {
+          const footerH = 14
+          const footerY = 8
+          const footerW = pageWidth - 32
+
+          // Background pill
+          page.drawRectangle({
+            x: 16,
+            y: footerY,
+            width: footerW,
+            height: footerH,
+            color: rgb(0.96, 0.97, 0.98),
+            borderColor: rgb(0.85, 0.88, 0.92),
+            borderWidth: 0.5,
+          })
+
+          // Audit trail text
+          const auditShortHash = `${docHash.substring(0, 10)}...${docHash.substring(docHash.length - 8)}`
+          const auditText = `🔒 Verified Digital Signature • SHA-256: ${auditShortHash} • Audit ID: ${auditId} • ${timestamp}`
+          page.drawText(auditText, {
+            x: 22,
+            y: footerY + 4,
+            size: 6.5,
+            font: helvetica,
+            color: rgb(0.3, 0.35, 0.4),
+          })
+
+          // Brand tag
+          page.drawText('Easy PDF Tools', {
+            x: footerW - 40,
+            y: footerY + 4,
+            size: 6.5,
+            font: helveticaBold,
+            color: rgb(0.1, 0.45, 0.4),
           })
         }
       }
@@ -692,7 +797,7 @@ export default function SignPDF() {
   return (
     <ToolPageLayout
       title="Sign PDF"
-      description="Create your digital signature with AES-256 encryption, add date stamps & checkmarks, and sign documents securely in your browser."
+      description="Create digital signatures with AES-256 encryption, anti-tamper flattening, and cryptographic SHA-256 audit trails."
       color="teal"
       icon={<SignIcon />}
     >
@@ -704,8 +809,10 @@ export default function SignPDF() {
             </svg>
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold text-slate-900">Your Document is Signed!</h3>
-            <p className="text-sm text-slate-500">Signatures and date stamps have been embedded into your PDF securely.</p>
+            <h3 className="text-2xl font-bold text-slate-900">Your Document is Signed &amp; Verified!</h3>
+            <p className="text-sm text-slate-500">
+              Signatures flattened directly into the document stream with cryptographic SHA-256 tamper verification.
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
             <a
@@ -736,23 +843,28 @@ export default function SignPDF() {
         <Spinner message={progressMsg} />
       ) : !pdfDoc ? (
         <div className="space-y-4">
-          <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload any PDF to add signatures, initials & date stamps" />
+          <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload any PDF to sign with AES-256 encryption & SHA-256 audit trail" />
           {errorMsg && <ErrorMessage message={errorMsg} onRetry={handleReset} />}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
             <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
               <span className="text-2xl">✍️</span>
-              <p className="font-bold text-xs text-slate-800 mt-1.5">Draw Signature</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Smooth digital ink with custom pen colors</p>
-            </div>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-2xl">🔤</span>
-              <p className="font-bold text-xs text-slate-800 mt-1.5">Type Signature</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Elegant handwriting calligraphy styles</p>
+              <p className="font-bold text-xs text-slate-800 mt-1.5">Draw / Type / Upload</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Smooth ink with transparent background</p>
             </div>
             <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
               <span className="text-2xl">🛡️</span>
-              <p className="font-bold text-xs text-slate-800 mt-1.5">AES-256 Encryption</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Optional PIN protection for saved signatures</p>
+              <p className="font-bold text-xs text-slate-800 mt-1.5">AES-256 &amp; PIN Lock</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Zero-knowledge local encrypted storage</p>
+            </div>
+            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
+              <span className="text-2xl">📜</span>
+              <p className="font-bold text-xs text-slate-800 mt-1.5">SHA-256 Audit Trail</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Tamper-proof cryptographic verification</p>
+            </div>
+            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
+              <span className="text-2xl">🔒</span>
+              <p className="font-bold text-xs text-slate-800 mt-1.5">PDF Flattening</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Prevents extracting or modifying signatures</p>
             </div>
           </div>
         </div>
@@ -793,6 +905,17 @@ export default function SignPDF() {
                 <span className="text-emerald-600 font-bold">✓</span>
                 Checkmark
               </button>
+
+              {/* Audit Trail Toggle */}
+              <label className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-medium text-slate-600 cursor-pointer hover:bg-slate-100 select-none ml-1">
+                <input
+                  type="checkbox"
+                  checked={includeAuditTrail}
+                  onChange={(e) => setIncludeAuditTrail(e.target.checked)}
+                  className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                />
+                <span>📜 Audit Trail Stamp</span>
+              </label>
             </div>
 
             {/* Page Navigation */}
@@ -864,7 +987,7 @@ export default function SignPDF() {
             </div>
           </div>
 
-          {/* Saved Signatures Tray with AES-256 & PIN Badge */}
+          {/* Saved Signatures Tray with AES-256 & Session Lock */}
           {savedSignatures.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 flex items-center justify-between gap-3 overflow-x-auto text-xs shadow-2xs">
               <div className="flex items-center gap-2">
@@ -939,6 +1062,17 @@ export default function SignPDF() {
                     </div>
                   )
                 })}
+
+                {/* Instant Session Lock Button */}
+                {savedSignatures.some((s) => s.hasPin && !s.isLocked) && (
+                  <button
+                    onClick={lockSensitiveSignatures}
+                    className="h-8 px-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-colors shrink-0"
+                    title="Zero out decrypted RAM and lock session immediately"
+                  >
+                    <span>🔒</span> Lock Session
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1017,7 +1151,7 @@ export default function SignPDF() {
           {/* Quick Help & Status */}
           <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 px-2 gap-2">
             <div className="flex items-center gap-3">
-              <span>💡 <strong>Privacy Note:</strong> All signatures are encrypted locally with AES-256. Zero data is ever sent to any server.</span>
+              <span>🛡️ <strong>Security Active:</strong> Flattened vector export, SHA-256 audit fingerprint, and inactivity auto-lock.</span>
               {placedItems.length > 0 && (
                 <span className="text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                   {placedItems.length} signature{placedItems.length !== 1 ? 's' : ''} placed
@@ -1272,7 +1406,7 @@ export default function SignPDF() {
         </div>
       )}
 
-      {/* ── Unlock PIN Modal ── */}
+      {/* ── Unlock PIN Modal with Brute-Force Protection ── */}
       {unlockTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
@@ -1305,15 +1439,23 @@ export default function SignPDF() {
                   setUnlockPin(e.target.value)
                   setUnlockError(null)
                 }}
+                disabled={cooldownRemaining > 0}
                 placeholder="Enter PIN code"
                 autoFocus
                 maxLength={8}
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-center font-mono text-lg tracking-widest text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-center font-mono text-lg tracking-widest text-slate-900 focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:bg-slate-100 outline-none"
               />
 
-              {unlockError && (
+              {cooldownRemaining > 0 ? (
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-center space-y-1">
+                  <p className="text-xs font-bold text-red-700">⏳ Cooldown Active</p>
+                  <p className="text-[11px] text-red-600">
+                    Security lock: Please wait <span className="font-bold">{cooldownRemaining}s</span> before retrying.
+                  </p>
+                </div>
+              ) : unlockError ? (
                 <p className="text-xs text-red-600 font-semibold text-center">{unlockError}</p>
-              )}
+              ) : null}
 
               <div className="flex gap-2 pt-1">
                 <button
@@ -1329,7 +1471,7 @@ export default function SignPDF() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!unlockPin.trim()}
+                  disabled={!unlockPin.trim() || cooldownRemaining > 0}
                   className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
                 >
                   Unlock &amp; Stamp

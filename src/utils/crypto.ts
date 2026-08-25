@@ -151,3 +151,19 @@ export async function decryptData(
     throw new Error('Incorrect PIN or corrupted signature data.')
   }
 }
+
+// Compute hex SHA-256 hash of ArrayBuffer (for document fingerprinting)
+export async function sha256Hash(buffer: ArrayBuffer): Promise<string> {
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Generate a cryptographically strong audit ID
+export function generateAuditId(): string {
+  const rand = window.crypto.getRandomValues(new Uint8Array(4))
+  const hex = Array.from(rand).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase()
+  const year = new Date().getFullYear()
+  return `SIG-${year}-${hex}`
+}
+
