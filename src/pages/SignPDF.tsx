@@ -7,6 +7,7 @@ import DropZone from '../components/DropZone'
 import Spinner from '../components/Spinner'
 import ErrorMessage from '../components/ErrorMessage'
 import { encryptData, decryptData, sha256Hash, generateAuditId, EncryptedPayload } from '../utils/crypto'
+import { extractSignature, InkColorMode, CropRect } from '../utils/imageExtractor'
 
 // Configure worker to use locally bundled worker file
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
@@ -95,6 +96,14 @@ export default function SignPDF() {
   const [typedFontIndex, setTypedFontIndex] = useState(0)
   const [typedColor, setTypedColor] = useState('#000000')
 
+  // Upload & Extractor Studio state
+  const [uploadedImageSrc, setUploadedImageSrc] = useState<string | null>(null)
+  const [uploadedImgEl, setUploadedImgEl] = useState<HTMLImageElement | null>(null)
+  const [cropBox, setCropBox] = useState<{ x: number; y: number; w: number; h: number }>({ x: 10, y: 10, w: 80, h: 80 }) // in percent 0..100
+  const [thresholdVal, setThresholdVal] = useState(150)
+  const [inkColorChoice, setInkColorChoice] = useState<InkColorMode>('black')
+  const [extractedPreviewUrl, setExtractedPreviewUrl] = useState<string | null>(null)
+
   // Storage & Encryption Options in Modal
   const [saveToDevice, setSaveToDevice] = useState(true)
   const [usePinLock, setUsePinLock] = useState(false)
@@ -117,6 +126,7 @@ export default function SignPDF() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isDrawingRef = useRef(false)
   const lastPointRef = useRef<{ x: number; y: number } | null>(null)
+  const cropContainerRef = useRef<HTMLDivElement>(null)
 
   const dragRef = useRef<{
     id: string
@@ -127,6 +137,16 @@ export default function SignPDF() {
     origW: number
     origH: number
     isResize: boolean
+  } | null>(null)
+
+  const cropDragRef = useRef<{
+    startX: number
+    startY: number
+    origX: number
+    origY: number
+    origW: number
+    origH: number
+    type: 'move' | 'nw' | 'ne' | 'se' | 'sw'
   } | null>(null)
 
   // ─── 1. Load Saved Encrypted Signatures from localStorage on Mount ───────────
@@ -140,7 +160,6 @@ export default function SignPDF() {
 
         for (const rec of records) {
           if (rec.payload.hasPin) {
-            // Needs user PIN to decrypt
             loadedList.push({
               id: rec.id,
               label: rec.label,
@@ -149,7 +168,6 @@ export default function SignPDF() {
               isLocked: true,
             })
           } else {
-            // Auto-decrypt with device AES-256 key
             try {
               const dataUrl = await decryptData(rec.payload)
               loadedList.push({
@@ -406,6 +424,8 @@ export default function SignPDF() {
     setIsModalOpen(false)
     setCreationPin('')
     setUsePinLock(false)
+    setUploadedImageSrc(null)
+    setUploadedImgEl(null)
   }
 
   const handleSaveDrawnSignature = () => {
@@ -441,43 +461,101 @@ export default function SignPDF() {
     addSignatureToDocument(dataUrl, typedName)
   }
 
+  // ─── 7. Smart Image Upload & Extractor Live Updates ─────────────────────────
   const handleUploadSignature = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     const reader = new FileReader()
     reader.onload = (ev) => {
+      const src = ev.target?.result as string
       const img = new Image()
       img.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = img.width
-        canvas.height = img.height
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return
-
-        ctx.drawImage(img, 0, 0)
-
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        const data = imgData.data
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i]
-          const g = data[i + 1]
-          const b = data[i + 2]
-          if (r > 215 && g > 215 && b > 215) {
-            data[i + 3] = 0
-          }
-        }
-        ctx.putImageData(imgData, 0, 0)
-        const dataUrl = canvas.toDataURL('image/png')
-        addSignatureToDocument(dataUrl, 'Uploaded')
+        setUploadedImgEl(img)
+        setUploadedImageSrc(src)
+        // Center crop default
+        setCropBox({ x: 15, y: 15, w: 70, h: 70 })
+        setThresholdVal(150)
       }
-      img.src = ev.target?.result as string
+      img.src = src
     }
     reader.readAsDataURL(file)
     e.target.value = ''
   }
 
-  // ─── 7. Unlock PIN-Protected Signature with Rate Limiting ───────────────────
+  // Recalculate extracted preview whenever cropBox, threshold, or colorMode changes
+  useEffect(() => {
+    if (!uploadedImgEl) {
+      setExtractedPreviewUrl(null)
+      return
+    }
+
+    const naturalW = uploadedImgEl.naturalWidth
+    const naturalH = uploadedImgEl.naturalHeight
+
+    const pixelCrop: CropRect = {
+      x: Math.round((cropBox.x / 100) * naturalW),
+      y: Math.round((cropBox.y / 100) * naturalH),
+      width: Math.round((cropBox.w / 100) * naturalW),
+      height: Math.round((cropBox.h / 100) * naturalH),
+    }
+
+    const { dataUrl } = extractSignature(uploadedImgEl, pixelCrop, thresholdVal, inkColorChoice)
+    setExtractedPreviewUrl(dataUrl)
+  }, [uploadedImgEl, cropBox, thresholdVal, inkColorChoice])
+
+  // Draggable crop box logic
+  const startCropDrag = (e: React.PointerEvent, type: 'move' | 'nw' | 'ne' | 'se' | 'sw') => {
+    e.stopPropagation()
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+
+    cropDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: cropBox.x,
+      origY: cropBox.y,
+      origW: cropBox.w,
+      origH: cropBox.h,
+      type,
+    }
+
+    const onMove = (ev: PointerEvent) => {
+      if (!cropDragRef.current || !cropContainerRef.current) return
+      const containerRect = cropContainerRef.current.getBoundingClientRect()
+      const dxPct = ((ev.clientX - cropDragRef.current.startX) / containerRect.width) * 100
+      const dyPct = ((ev.clientY - cropDragRef.current.startY) / containerRect.height) * 100
+
+      const { origX, origY, origW, origH, type: dragType } = cropDragRef.current
+
+      if (dragType === 'move') {
+        const newX = Math.max(0, Math.min(100 - origW, origX + dxPct))
+        const newY = Math.max(0, Math.min(100 - origH, origY + dyPct))
+        setCropBox({ x: newX, y: newY, w: origW, h: origH })
+      } else if (dragType === 'se') {
+        const newW = Math.max(10, Math.min(100 - origX, origW + dxPct))
+        const newH = Math.max(10, Math.min(100 - origY, origH + dyPct))
+        setCropBox({ x: origX, y: origY, w: newW, h: newH })
+      } else if (dragType === 'nw') {
+        const newX = Math.max(0, Math.min(origX + origW - 10, origX + dxPct))
+        const newY = Math.max(0, Math.min(origY + origH - 10, origY + dyPct))
+        const newW = origW - (newX - origX)
+        const newH = origH - (newY - origY)
+        setCropBox({ x: newX, y: newY, w: newW, h: newH })
+      }
+    }
+
+    const onUp = () => {
+      cropDragRef.current = null
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  // ─── 8. Unlock PIN-Protected Signature with Rate Limiting ───────────────────
   const handleUnlockSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!unlockTarget || !unlockPin.trim() || cooldownRemaining > 0) return
@@ -492,7 +570,6 @@ export default function SignPDF() {
 
       const decryptedDataUrl = await decryptData(record.payload, unlockPin.trim())
 
-      // Success: Reset failed attempts
       setFailedAttempts(0)
 
       setSavedSignatures((prev) =>
@@ -503,7 +580,6 @@ export default function SignPDF() {
         )
       )
 
-      // Stamp onto document
       const w = 150
       const h = 60
       const newItem: PlacedSignature = {
@@ -552,7 +628,7 @@ export default function SignPDF() {
     }
   }
 
-  // ─── 8. Quick Stamps (Date, Checkmark) ──────────────────────────────────────
+  // ─── 9. Quick Stamps (Date, Checkmark) ──────────────────────────────────────
   const addDateStamp = () => {
     const today = new Date().toISOString().split('T')[0]
     const canvas = document.createElement('canvas')
@@ -614,7 +690,7 @@ export default function SignPDF() {
     setSelectedId(newItem.id)
   }
 
-  // ─── 9. Drag & Resize Placed Items ──────────────────────────────────────────
+  // ─── 10. Drag & Resize Placed Items ─────────────────────────────────────────
   const startDrag = (id: string, e: React.PointerEvent, isResize = false) => {
     e.stopPropagation()
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -685,7 +761,7 @@ export default function SignPDF() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId])
 
-  // ─── 10. Flattened Export with Cryptographic SHA-256 Audit Trail ────────────
+  // ─── 11. Flattened Export with Cryptographic SHA-256 Audit Trail ────────────
   const handleExportSigned = async () => {
     const file = files[0]
     if (!file) return
@@ -711,7 +787,6 @@ export default function SignPDF() {
         const pageHeight = page.getHeight()
         const pageSignatures = placedItems.filter((item) => item.page === pageNum)
 
-        // 1. Flatten & Draw Signatures into base content stream
         for (const item of pageSignatures) {
           const imgBytes = await dataUrlToBytes(item.dataUrl)
           const embeddedPng = await pdfDocLib.embedPng(imgBytes)
@@ -725,13 +800,11 @@ export default function SignPDF() {
           })
         }
 
-        // 2. Add Anti-Tamper Cryptographic Audit Trail Footer if enabled
         if (includeAuditTrail && pageSignatures.length > 0) {
           const footerH = 14
           const footerY = 8
           const footerW = pageWidth - 32
 
-          // Background pill
           page.drawRectangle({
             x: 16,
             y: footerY,
@@ -742,7 +815,6 @@ export default function SignPDF() {
             borderWidth: 0.5,
           })
 
-          // Audit trail text
           const auditShortHash = `${docHash.substring(0, 10)}...${docHash.substring(docHash.length - 8)}`
           const auditText = `🔒 Verified Digital Signature • SHA-256: ${auditShortHash} • Audit ID: ${auditId} • ${timestamp}`
           page.drawText(auditText, {
@@ -753,7 +825,6 @@ export default function SignPDF() {
             color: rgb(0.3, 0.35, 0.4),
           })
 
-          // Brand tag
           page.drawText('Easy PDF Tools', {
             x: footerW - 40,
             y: footerY + 4,
@@ -783,6 +854,8 @@ export default function SignPDF() {
     setPlacedItems([])
     setSelectedId(null)
     setDownloadUrl(null)
+    setUploadedImageSrc(null)
+    setUploadedImgEl(null)
   }
 
   const SignIcon = () => (
@@ -797,7 +870,7 @@ export default function SignPDF() {
   return (
     <ToolPageLayout
       title="Sign PDF"
-      description="Create digital signatures with AES-256 encryption, anti-tamper flattening, and cryptographic SHA-256 audit trails."
+      description="Create digital signatures with smart background removal, AES-256 encryption, anti-tamper flattening, and cryptographic SHA-256 audit trails."
       color="teal"
       icon={<SignIcon />}
     >
@@ -843,13 +916,13 @@ export default function SignPDF() {
         <Spinner message={progressMsg} />
       ) : !pdfDoc ? (
         <div className="space-y-4">
-          <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload any PDF to sign with AES-256 encryption & SHA-256 audit trail" />
+          <DropZone onFilesSelected={setFiles} selectedFiles={files} hint="Upload any PDF to sign with smart ink extraction, AES-256 encryption & SHA-256 audit trail" />
           {errorMsg && <ErrorMessage message={errorMsg} onRetry={handleReset} />}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
             <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-2xl">✍️</span>
-              <p className="font-bold text-xs text-slate-800 mt-1.5">Draw / Type / Upload</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Smooth ink with transparent background</p>
+              <span className="text-2xl">📸</span>
+              <p className="font-bold text-xs text-slate-800 mt-1.5">Smart Photo Extractor</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Crops & removes paper/shadows from photos</p>
             </div>
             <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-center shadow-xs">
               <span className="text-2xl">🛡️</span>
@@ -1063,7 +1136,6 @@ export default function SignPDF() {
                   )
                 })}
 
-                {/* Instant Session Lock Button */}
                 {savedSignatures.some((s) => s.hasPin && !s.isLocked) && (
                   <button
                     onClick={lockSensitiveSignatures}
@@ -1123,7 +1195,6 @@ export default function SignPDF() {
 
                     {isSelected && (
                       <>
-                        {/* Delete Button */}
                         <button
                           type="button"
                           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault() }}
@@ -1134,7 +1205,6 @@ export default function SignPDF() {
                         >
                           ✕
                         </button>
-                        {/* Resize Handle */}
                         <div
                           onPointerDown={(e) => startDrag(item.id, e, true)}
                           className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-teal-600 rounded-xs cursor-nwse-resize z-30"
@@ -1171,7 +1241,7 @@ export default function SignPDF() {
       {/* ── Create Signature Modal ── */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+          <div className={`bg-white rounded-3xl w-full p-6 shadow-2xl border border-slate-100 space-y-4 ${modalTab === 'upload' && uploadedImageSrc ? 'max-w-2xl' : 'max-w-lg'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1179,7 +1249,11 @@ export default function SignPDF() {
                 <h3 className="text-lg font-bold text-slate-900">Create Signature</h3>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setUploadedImageSrc(null)
+                  setUploadedImgEl(null)
+                }}
                 className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm font-bold"
               >
                 ✕
@@ -1210,7 +1284,7 @@ export default function SignPDF() {
                   modalTab === 'upload' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                📤 Upload
+                📸 Smart Extractor
               </button>
             </div>
 
@@ -1330,21 +1404,169 @@ export default function SignPDF() {
               </div>
             )}
 
-            {/* Tab 3: Upload */}
+            {/* Tab 3: Upload & Smart Extractor Studio */}
             {modalTab === 'upload' && (
-              <div className="space-y-3 text-center">
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-2xl p-6 cursor-pointer transition-colors bg-slate-50 hover:bg-teal-50/30"
-                >
-                  <span className="text-3xl">📷</span>
-                  <p className="font-bold text-sm text-slate-800 mt-2">Upload signature photo or scan</p>
-                  <p className="text-xs text-slate-500 mt-1">PNG, JPG, or JPEG (White background will be automatically removed)</p>
-                </div>
+              <div className="space-y-4">
+                {!uploadedImageSrc ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-2xl p-8 cursor-pointer transition-colors bg-slate-50 hover:bg-teal-50/30 text-center"
+                  >
+                    <span className="text-4xl">📸</span>
+                    <p className="font-bold text-sm text-slate-800 mt-2">Upload Photo of Signature</p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      Supports phone photos of receipts, paper, or scans. We will crop and automatically erase all background paper and shadows!
+                    </p>
+                  </div>
+                ) : (
+                  /* ── Smart Crop & Extractor Workspace ── */
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Left: Source Image with Interactive Crop Box */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                          <span>1. Drag box over signature:</span>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="text-[11px] text-teal-600 hover:underline font-semibold"
+                          >
+                            Change Photo
+                          </button>
+                        </div>
+
+                        <div
+                          ref={cropContainerRef}
+                          className="relative border border-slate-300 rounded-xl overflow-hidden bg-slate-900 select-none flex items-center justify-center"
+                          style={{ height: '220px' }}
+                        >
+                          <img
+                            src={uploadedImageSrc}
+                            alt="Uploaded"
+                            className="max-h-full max-w-full object-contain pointer-events-none"
+                          />
+
+                          {/* Semi-transparent dark overlay around crop */}
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `${cropBox.x}%`,
+                              top: `${cropBox.y}%`,
+                              width: `${cropBox.w}%`,
+                              height: `${cropBox.h}%`,
+                              boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.65)',
+                              border: '2px solid #0d9488',
+                              cursor: 'move',
+                            }}
+                            onPointerDown={(e) => startCropDrag(e, 'move')}
+                            className="z-10 group"
+                          >
+                            <span className="absolute -top-5 left-1 text-[10px] bg-teal-600 text-white font-bold px-1.5 py-0.5 rounded shadow-xs">
+                              Crop Area
+                            </span>
+
+                            {/* SE Resize Handle */}
+                            <div
+                              onPointerDown={(e) => startCropDrag(e, 'se')}
+                              className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-white border-2 border-teal-600 rounded-xs cursor-nwse-resize z-20 shadow"
+                            />
+                            {/* NW Resize Handle */}
+                            <div
+                              onPointerDown={(e) => startCropDrag(e, 'nw')}
+                              className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-white border-2 border-teal-600 rounded-xs cursor-nwse-resize z-20 shadow"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Extracted Live Transparent Preview */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                          <span>2. Extracted Transparent Signature:</span>
+                          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
+                            Transparent PNG
+                          </span>
+                        </div>
+
+                        {/* Checkerboard Background for Transparency */}
+                        <div
+                          className="border border-slate-300 rounded-xl overflow-hidden flex items-center justify-center p-3 relative"
+                          style={{
+                            height: '220px',
+                            backgroundImage: 'linear-gradient(45deg, #f1f5f9 25%, transparent 25%), linear-gradient(-45deg, #f1f5f9 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f1f5f9 75%), linear-gradient(-45deg, transparent 75%, #f1f5f9 75%)',
+                            backgroundSize: '16px 16px',
+                            backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                            backgroundColor: '#ffffff',
+                          }}
+                        >
+                          {extractedPreviewUrl ? (
+                            <img
+                              src={extractedPreviewUrl}
+                              alt="Extracted Preview"
+                              className="max-h-full max-w-full object-contain drop-shadow-xs"
+                            />
+                          ) : (
+                            <span className="text-xs text-slate-400">Processing...</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Extractor Fine-Tuning Controls */}
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                      {/* Threshold Slider */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                          <span>🧹 Background Cleaning Sensitivity:</span>
+                          <span className="text-teal-700 font-mono font-bold">{thresholdVal}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={60}
+                          max={230}
+                          value={thresholdVal}
+                          onChange={(e) => setThresholdVal(parseInt(e.target.value, 10))}
+                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
+                        />
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Keep lighter strokes</span>
+                          <span>Erase faint shadows &amp; paper</span>
+                        </div>
+                      </div>
+
+                      {/* Ink Color Palette */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
+                        <span className="font-semibold text-slate-700">Ink Color:</span>
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            { id: 'black' as InkColorMode, label: 'Enhanced Black', bg: '#0f172a' },
+                            { id: 'navy' as InkColorMode, label: 'Navy Blue', bg: '#1e3a8a' },
+                            { id: 'red' as InkColorMode, label: 'Dark Red', bg: '#991b1b' },
+                            { id: 'original' as InkColorMode, label: 'Original', bg: '#64748b' },
+                          ].map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setInkColorChoice(item.id)}
+                              className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1 ${
+                                inkColorChoice === item.id
+                                  ? 'bg-white border-teal-500 text-teal-700 shadow-xs'
+                                  : 'border-slate-200 text-slate-600 bg-slate-100 hover:bg-slate-200'
+                              }`}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.bg }} />
+                              <span>{item.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
                   className="hidden"
                   onChange={handleUploadSignature}
                 />
@@ -1393,7 +1615,21 @@ export default function SignPDF() {
             </div>
 
             {/* Action Buttons */}
-            {modalTab !== 'upload' && (
+            {modalTab === 'upload' ? (
+              uploadedImageSrc && (
+                <button
+                  onClick={() => {
+                    if (extractedPreviewUrl) {
+                      addSignatureToDocument(extractedPreviewUrl, 'Extracted Photo')
+                    }
+                  }}
+                  disabled={!extractedPreviewUrl}
+                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 text-sm transition-colors"
+                >
+                  Insert Extracted Signature
+                </button>
+              )
+            ) : (
               <button
                 onClick={modalTab === 'draw' ? handleSaveDrawnSignature : handleSaveTypedSignature}
                 disabled={modalTab === 'type' && !typedName.trim()}
