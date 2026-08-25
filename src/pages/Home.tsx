@@ -1,223 +1,243 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import ToolCard from '../components/ToolCard'
 import { useRouter } from '../router'
 
 const TOOLS = [
   {
-    path: '/merge',
-    label: 'Merge PDF',
-    description: 'Combine multiple PDFs into one document. Reorder pages before merging.',
-    gradient: 'from-blue-500 to-blue-700',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-  {
-    path: '/split',
-    label: 'Split PDF',
-    description: 'Split a PDF by page ranges, every N pages, or into individual pages.',
-    gradient: 'from-purple-500 to-purple-700',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-      </svg>
-    ),
-  },
-  {
-    path: '/compress',
-    label: 'Compress PDF',
-    description: 'Reduce PDF file size with low, recommended, or extreme compression.',
-    gradient: 'from-emerald-500 to-emerald-700',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-      </svg>
-    ),
-  },
-  {
     path: '/edit',
     label: 'Edit PDF',
-    description: 'Click existing text to edit, erase with whiteout, add images & draw directly.',
-    gradient: 'from-indigo-500 to-indigo-700',
+    description: 'Edit existing text, erase with whiteout, insert images, and draw annotations in real time.',
+    category: 'edit',
+    isClientSide: true,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
       </svg>
     ),
   },
   {
     path: '/sign',
     label: 'Sign PDF',
-    description: 'Draw, type, or upload your signature and place it anywhere on your PDF.',
-    gradient: 'from-teal-500 to-teal-700',
+    description: 'Draw, type, or extract signatures from photos. Secured with AES-256 local encryption.',
+    category: 'edit',
+    isClientSide: true,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     ),
   },
   {
-    path: '/word',
-    label: 'PDF to Word',
-    description: 'Convert PDF files to editable Word (.docx) documents instantly.',
-    gradient: 'from-violet-500 to-violet-700',
+    path: '/merge',
+    label: 'Merge PDF',
+    description: 'Combine multiple PDF documents into a single file with custom page reordering.',
+    category: 'organize',
+    isClientSide: true,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
       </svg>
     ),
   },
   {
-    path: '/jpg',
-    label: 'PDF to JPG',
-    description: 'Convert each PDF page into a high-quality JPG image. Download as ZIP.',
-    gradient: 'from-orange-500 to-orange-700',
+    path: '/split',
+    label: 'Split PDF',
+    description: 'Extract custom page ranges, split by intervals, or save every page as an individual PDF.',
+    category: 'organize',
+    isClientSide: true,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
       </svg>
     ),
   },
   {
     path: '/rotate',
     label: 'Rotate PDF',
-    description: 'Rotate all or specific pages by 90°, 180°, or 270° with one click.',
-    gradient: 'from-amber-500 to-amber-700',
+    description: 'Rotate all or selected pages (even/odd) by 90°, 180°, or 270° instantly.',
+    category: 'organize',
+    isClientSide: true,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    ),
+  },
+  {
+    path: '/jpg',
+    label: 'PDF to JPG',
+    description: 'Convert PDF pages into high-resolution JPG images packaged in a clean ZIP download.',
+    category: 'convert',
+    isClientSide: true,
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
+  {
+    path: '/compress',
+    label: 'Compress PDF',
+    description: 'Optimize and reduce PDF file size while preserving high visual document fidelity.',
+    category: 'convert',
+    isClientSide: false,
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    ),
+  },
+  {
+    path: '/word',
+    label: 'PDF to Word',
+    description: 'Convert PDF documents into fully editable Microsoft Word (.docx) documents.',
+    category: 'convert',
+    isClientSide: false,
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     ),
   },
   {
     path: '/protect',
     label: 'Protect PDF',
-    description: 'Add password protection with 128-bit or 256-bit encryption.',
-    gradient: 'from-rose-500 to-rose-700',
+    description: 'Encrypt and lock sensitive PDF files with secure AES password protection.',
+    category: 'security',
+    isClientSide: false,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
     ),
   },
   {
     path: '/unlock',
     label: 'Unlock PDF',
-    description: 'Remove password protection from PDF files. Enter the existing password.',
-    gradient: 'from-teal-500 to-teal-700',
+    description: 'Remove password restrictions and security permissions from unlocked PDF files.',
+    category: 'security',
+    isClientSide: false,
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
       </svg>
     ),
   },
 ]
 
-const FEATURES = [
-  {
-    icon: (
-      <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-    ),
-    bg: 'bg-blue-50',
-    title: '100% Secure',
-    body: 'Your files are processed via encrypted HTTPS. We never store your documents.',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-    bg: 'bg-emerald-50',
-    title: 'Lightning Fast',
-    body: 'High-performance cloud processing converts and optimizes your documents in seconds.',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-      </svg>
-    ),
-    bg: 'bg-purple-50',
-    title: 'Professional Quality',
-    body: 'Enterprise-grade PDF processing with no quality loss or watermarks.',
-  },
+const CATEGORY_TABS = [
+  { id: 'all', label: 'All Tools' },
+  { id: 'edit', label: 'Edit & Sign' },
+  { id: 'organize', label: 'Organize' },
+  { id: 'convert', label: 'Convert' },
+  { id: 'security', label: 'Security' },
 ]
 
 export default function Home() {
   const { navigate } = useRouter()
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
   useEffect(() => {
     document.title = 'Easy PDF Tools — Free Online PDF Editor, Converter & Utilities | easypdftools.xyz'
   }, [])
 
+  const filteredTools = selectedCategory === 'all'
+    ? TOOLS
+    : TOOLS.filter((t) => t.category === selectedCategory)
+
   return (
-    <div>
-      {/* ── Hero ─────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-950 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 text-white py-20 sm:py-28 px-4 border-b border-blue-800/40 dark:border-slate-800/80 transition-colors duration-200">
-        {/* Subtle Ambient Radial Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent dark:from-blue-600/15 pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-100 dark:text-slate-300 mb-6 shadow-xs">
-            10 Free PDF Tools — No Signup Required
+    <div className="space-y-12">
+      {/* ── Minimalist SaaS Hero ─────────────────────────────── */}
+      <section className="border-b border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 py-16 sm:py-20 px-4 transition-colors">
+        <div className="max-w-4xl mx-auto text-center space-y-5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-300 rounded-full text-xs font-semibold">
+            10 Free Web PDF Utilities
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 tracking-tight leading-tight text-white dark:text-slate-100">
-            All Your PDF Tools
-            <br />
-            <span className="text-blue-200 dark:text-blue-400">in One Place</span>
+
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+            Professional PDF Tools for Everyone
           </h1>
-          <p className="text-lg sm:text-xl text-blue-100 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Merge, split, compress, edit, sign, convert, rotate, protect and unlock PDF files.
-            Fast, secure, and completely free.
+
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Edit text in-place, sign contracts, merge, split, rotate, and convert PDF files. Fast, unrestricted, and built with local browser privacy.
           </p>
-          <button
-            onClick={() => navigate('/merge')}
-            className="mt-8 inline-flex items-center gap-2 bg-white dark:bg-blue-600 text-blue-700 dark:text-white font-bold px-7 py-3.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-500 active:bg-blue-100 transition-all shadow-lg shadow-blue-900/30 dark:shadow-blue-950/50 text-base cursor-pointer"
-          >
-            Get Started
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
 
-      {/* ── Tools Grid ───────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Choose a Tool</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-base">Select any tool below to get started instantly</p>
+          <div className="pt-3 flex items-center justify-center gap-3">
+            <button
+              onClick={() => navigate('/edit')}
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-xl text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
+            >
+              Edit PDF Document
+            </button>
+            <button
+              onClick={() => navigate('/sign')}
+              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs sm:text-sm border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+            >
+              Sign PDF
+            </button>
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {TOOLS.map((tool) => (
-            <ToolCard key={tool.path} {...tool} />
-          ))}
-        </div>
-      </div>
+      </section>
 
-      {/* ── Features ─────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 border-t border-b border-slate-100 dark:border-slate-800 py-16 px-4 transition-colors duration-200">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="flex flex-col items-center text-center gap-3">
-                <div className={`w-12 h-12 ${f.bg} dark:bg-slate-800 rounded-xl flex items-center justify-center`}>
-                  {f.icon}
-                </div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-base">{f.title}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{f.body}</p>
-              </div>
+      {/* ── Tools Grid & Filter Tabs ───────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Available Tools</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Select a utility to process documents immediately</p>
+          </div>
+
+          {/* Clean Segmented Filter Tabs */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl gap-1 overflow-x-auto text-xs font-medium">
+            {CATEGORY_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedCategory(tab.id)}
+                className={[
+                  'px-3 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer',
+                  selectedCategory === tab.id
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                ].join(' ')}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
         </div>
-      </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredTools.map((tool) => (
+            <ToolCard key={tool.path} {...tool} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── Architecture & Capabilities Summary ─────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-1.5">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Client-Side First</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Core document operations (editing, signing, merging, splitting, and rendering) run directly inside your browser memory.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Zero File Size Limits</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Process large PDF files without arbitrary artificial file size caps, page count restrictions, or paywalls.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Open Source &amp; Auditable</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Built transparently on GitHub for open verification by developers and privacy-conscious professionals worldwide.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
