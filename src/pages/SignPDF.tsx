@@ -822,7 +822,7 @@ export default function SignPDF() {
           })
 
           const auditShortHash = `${docHash.substring(0, 10)}...${docHash.substring(docHash.length - 8)}`
-          const auditText = `🔒 Verified Digital Signature • SHA-256: ${auditShortHash} • Audit ID: ${auditId} • ${timestamp}`
+          const auditText = `[VERIFIED SIGNATURE] SHA-256: ${auditShortHash} | ID: ${auditId} | ${timestamp}`
           page.drawText(auditText, {
             x: 22,
             y: footerY + 4,
