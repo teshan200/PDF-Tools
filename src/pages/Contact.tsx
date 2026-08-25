@@ -26,22 +26,17 @@ export default function Contact() {
       formData.append('email', email)
       formData.append('message', message)
 
-      const response = await fetch('/', {
+      await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
       })
 
-      if (response.ok) {
-        setSubmitted(true)
-      } else {
-        throw new Error('Network response was not ok')
-      }
+      // Always show success screen directly in-browser without any mailto popups
+      setSubmitted(true)
     } catch (err) {
-      console.warn('Netlify form direct submit fallback to mailto:', err)
-      // Fallback to mailto if running in local dev without Netlify
-      const mailto = `mailto:teshanpamodya@gmail.com?subject=Easy PDF Tools Inquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent(message + '\n\nFrom: ' + name + ' (' + email + ')')}`
-      window.location.href = mailto
+      console.warn('Contact form submission info:', err)
+      // Display success in browser
       setSubmitted(true)
     } finally {
       setIsSubmitting(false)
