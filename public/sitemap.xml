@@ -3,91 +3,61 @@
   <url>
     <loc>https://easypdftools.xyz/</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/edit</loc>
+    <loc>https://easypdftools.xyz/edit</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/sign</loc>
+    <loc>https://easypdftools.xyz/sign</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/merge</loc>
+    <loc>https://easypdftools.xyz/merge</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/split</loc>
+    <loc>https://easypdftools.xyz/split</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/compress</loc>
+    <loc>https://easypdftools.xyz/compress</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/word</loc>
+    <loc>https://easypdftools.xyz/word</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/jpg</loc>
+    <loc>https://easypdftools.xyz/jpg</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/rotate</loc>
+    <loc>https://easypdftools.xyz/rotate</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/protect</loc>
+    <loc>https://easypdftools.xyz/protect</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/unlock</loc>
+    <loc>https://easypdftools.xyz/unlock</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/about</loc>
+    <loc>https://easypdftools.xyz/about</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/privacy</loc>
+    <loc>https://easypdftools.xyz/privacy</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/terms</loc>
+    <loc>https://easypdftools.xyz/terms</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://easypdftools.xyz/#/contact</loc>
+    <loc>https://easypdftools.xyz/contact</loc>
     <lastmod>2026-08-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
 </urlset>

@@ -16,7 +16,10 @@ const RouterContext = createContext<RouterContextType>({
 
 function getHashPath(): string {
   const hash = window.location.hash.replace(/^#/, '')
-  return hash || '/'
+  if (hash) return hash.startsWith('/') ? hash : `/${hash}`
+  const pathname = window.location.pathname
+  if (pathname && pathname !== '/') return pathname
+  return '/'
 }
 
 export function RouterProvider({ children }: { children: React.ReactNode }) {
@@ -25,7 +28,11 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handler = () => setPath(getHashPath())
     window.addEventListener('hashchange', handler)
-    return () => window.removeEventListener('hashchange', handler)
+    window.addEventListener('popstate', handler)
+    return () => {
+      window.removeEventListener('hashchange', handler)
+      window.removeEventListener('popstate', handler)
+    }
   }, [])
 
   // Update dynamic SEO metadata and send page_view event to Google Analytics
