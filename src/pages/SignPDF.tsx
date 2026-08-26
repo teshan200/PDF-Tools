@@ -241,6 +241,9 @@ export default function SignPDF() {
     return () => clearInterval(timer)
   }, [cooldownRemaining])
 
+  // Render task reference for PDF.js page rendering
+  const renderTaskRef = useRef<any>(null)
+
   // ─── 3. Load PDF Document ───────────────────────────────────────────────────
   useEffect(() => {
     const file = files[0]
@@ -258,11 +261,21 @@ export default function SignPDF() {
     setProgressMsg('Loading PDF preview...')
     setErrorMsg(null)
 
-    file.arrayBuffer().then((buffer) => {
+    file.arrayBuffer().then(async (buffer) => {
       if (cancelled) return
-      return pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise
-    }).then((doc) => {
+      const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise
       if (cancelled || !doc) return
+
+      // Pre-fetch page 1 dimensions to calculate immediate fit-to-width scale
+      const firstPage = await doc.getPage(1)
+      const unscaledViewport = firstPage.getViewport({ scale: 1.0 })
+      
+      const isMobile = window.innerWidth < 640
+      const containerWidth = (containerRef.current?.clientWidth || window.innerWidth) - (isMobile ? 24 : 80)
+      const initialScale = Math.min(1.4, Math.max(0.3, parseFloat((containerWidth / unscaledViewport.width).toFixed(2))))
+
+      setPageDimensions({ width: unscaledViewport.width, height: unscaledViewport.height })
+      setScale(initialScale)
       setPdfDoc(doc)
       setNumPages(doc.numPages)
       setCurrentPage(1)
@@ -283,7 +296,6 @@ export default function SignPDF() {
   // ─── 4. Render Current Page ─────────────────────────────────────────────────
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return
-    let renderTask: any = null
     let cancelled = false
 
     pdfDoc.getPage(currentPage).then(async (page: any) => {
@@ -294,14 +306,22 @@ export default function SignPDF() {
       const viewport = page.getViewport({ scale })
       const canvas = canvasRef.current
       if (!canvas) return
-      const ctx = canvas.getContext('2d')
+      const ctx = canvas.getContext('2d', { alpha: false })
       if (!ctx) return
 
-      canvas.width = viewport.width
-      canvas.height = viewport.height
+      canvas.width = Math.floor(viewport.width)
+      canvas.height = Math.floor(viewport.height)
 
-      renderTask = page.render({ canvasContext: ctx, viewport })
-      return renderTask.promise
+      // Solid white background guarantee — prevents black/blue screen on mobile WebViews
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      if (renderTaskRef.current) {
+        try { renderTaskRef.current.cancel() } catch {}
+      }
+
+      renderTaskRef.current = page.render({ canvasContext: ctx, viewport })
+      return renderTaskRef.current.promise
     }).catch((err: any) => {
       if (err?.name !== 'RenderingCancelledException') {
         console.error('Render error:', err)
@@ -310,30 +330,21 @@ export default function SignPDF() {
 
     return () => {
       cancelled = true
-      if (renderTask) renderTask.cancel()
+      if (renderTaskRef.current) {
+        try { renderTaskRef.current.cancel() } catch {}
+      }
     }
   }, [pdfDoc, currentPage, scale])
-
-  // Auto-fit to mobile container width on initial load and page dimension changes
-  useEffect(() => {
-    if (!containerRef.current || !pageDimensions.width) return
-    const isMobile = window.innerWidth < 640
-    const containerWidth = containerRef.current.clientWidth - (isMobile ? 20 : 64)
-    if (containerWidth > 0 && pageDimensions.width > 0) {
-      const targetScale = Math.min(1.2, Math.max(0.3, containerWidth / pageDimensions.width))
-      setScale(parseFloat(targetScale.toFixed(2)))
-    }
-  }, [pageDimensions.width])
 
   // Auto-fit on window resize
   useEffect(() => {
     const handleResize = () => {
       if (!containerRef.current || !pageDimensions.width) return
       const isMobile = window.innerWidth < 640
-      const containerWidth = containerRef.current.clientWidth - (isMobile ? 20 : 64)
+      const containerWidth = containerRef.current.clientWidth - (isMobile ? 24 : 80)
       if (containerWidth > 0 && pageDimensions.width > 0) {
-        const targetScale = Math.min(1.2, Math.max(0.3, containerWidth / pageDimensions.width))
-        setScale(parseFloat(targetScale.toFixed(2)))
+        const targetScale = Math.min(1.4, Math.max(0.3, parseFloat((containerWidth / pageDimensions.width).toFixed(2))))
+        setScale(targetScale)
       }
     }
     window.addEventListener('resize', handleResize)
@@ -343,9 +354,9 @@ export default function SignPDF() {
   const fitToWidth = useCallback(() => {
     if (!containerRef.current || !pageDimensions.width) return
     const isMobile = window.innerWidth < 640
-    const containerWidth = containerRef.current.clientWidth - (isMobile ? 20 : 64)
-    const targetScale = Math.min(1.4, Math.max(0.3, (containerWidth / pageDimensions.width)))
-    setScale(parseFloat(targetScale.toFixed(2)))
+    const containerWidth = containerRef.current.clientWidth - (isMobile ? 24 : 80)
+    const targetScale = Math.min(1.4, Math.max(0.3, parseFloat((containerWidth / pageDimensions.width).toFixed(2))))
+    setScale(targetScale)
   }, [pageDimensions.width])
 
   // ─── 5. Signature Pad Drawing Logic ─────────────────────────────────────────
@@ -725,12 +736,11 @@ export default function SignPDF() {
   }
 
   // ─── 10. Drag & Resize Placed Items ─────────────────────────────────────────
+  const animFrameRef = useRef<number | null>(null)
+
   const startDrag = (id: string, e: React.PointerEvent, isResize = false) => {
     e.stopPropagation()
     e.preventDefault()
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    } catch {}
     setSelectedId(id)
 
     const item = placedItems.find((a) => a.id === id)
@@ -747,12 +757,11 @@ export default function SignPDF() {
       isResize,
     }
 
-    const onMove = (ev: PointerEvent) => {
+    const updatePosition = (clientX: number, clientY: number) => {
       if (!dragRef.current || dragRef.current.id !== id) return
-      if (typeof ev.clientX !== 'number' || typeof ev.clientY !== 'number') return
       const currentScale = Math.max(0.1, scale || 1)
-      const dx = (ev.clientX - dragRef.current.startX) / currentScale
-      const dy = (ev.clientY - dragRef.current.startY) / currentScale
+      const dx = (clientX - dragRef.current.startX) / currentScale
+      const dy = (clientY - dragRef.current.startY) / currentScale
 
       setPlacedItems((prev) =>
         prev.map((it) => {
@@ -775,14 +784,23 @@ export default function SignPDF() {
       )
     }
 
+    const onMove = (ev: PointerEvent) => {
+      if (typeof ev.clientX !== 'number' || typeof ev.clientY !== 'number') return
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      animFrameRef.current = requestAnimationFrame(() => updatePosition(ev.clientX, ev.clientY))
+    }
+
     const onUp = () => {
       dragRef.current = null
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
     }
 
     window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerup', onUp, { passive: true })
+    window.addEventListener('pointercancel', onUp, { passive: true })
   }
 
   const deletePlacedItem = (id: string) => {
