@@ -187,15 +187,17 @@ export function updateSEOForRoute(path: string) {
   const fullCanonical = `${BASE_URL}${data.canonicalPath === '/' ? '' : data.canonicalPath}`
   setCanonical(fullCanonical)
 
-  // Update Open Graph (Facebook / LinkedIn)
+  // Update Open Graph (Facebook / LinkedIn / WhatsApp)
   setMetaTag('property', 'og:title', data.title)
   setMetaTag('property', 'og:description', data.description)
   setMetaTag('property', 'og:url', fullCanonical)
+  setMetaTag('property', 'og:image', `${BASE_URL}/og-image.png`)
 
   // Update Twitter Cards
   setMetaTag('name', 'twitter:title', data.title)
   setMetaTag('name', 'twitter:description', data.description)
   setMetaTag('name', 'twitter:url', fullCanonical)
+  setMetaTag('name', 'twitter:image', `${BASE_URL}/og-image.png`)
 
   // Dynamic JSON-LD Structured Data
   updateStructuredData(data, fullCanonical)
