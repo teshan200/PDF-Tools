@@ -234,33 +234,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Navigation Drawer */}
         {menuOpen && (
-          <div className="lg:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              {TOOL_CATEGORIES.flatMap((c) => c.items).map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => { navigate(item.path); setMenuOpen(false) }}
-                  className={[
-                    'p-2.5 rounded-xl text-left transition-all block cursor-pointer',
-                    path === item.path
-                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800',
-                  ].join(' ')}
-                >
-                  <p className="text-xs font-semibold">{item.label}</p>
-                </button>
-              ))}
-            </div>
+          <div className="lg:hidden border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl px-4 py-5 space-y-4 max-h-[85vh] overflow-y-auto animate-fadeIn">
+            {TOOL_CATEGORIES.map((cat) => (
+              <div key={cat.category} className="space-y-1.5">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+                  {cat.category}
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {cat.items.map((item) => (
+                    <button
+                      key={item.path}
+                      onClick={() => { navigate(item.path); setMenuOpen(false) }}
+                      className={[
+                        'p-2.5 rounded-xl text-left transition-all block cursor-pointer border',
+                        path === item.path
+                          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white font-bold shadow-xs'
+                          : 'text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 border-slate-200/70 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800',
+                      ].join(' ')}
+                    >
+                      <p className="text-xs font-semibold">{item.label}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{item.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
 
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs">
               <a
                 href="https://github.com/teshan200/PDF-Tools"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:underline"
+                className="inline-flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 <GithubIcon />
                 <span>GitHub Repository ↗</span>
+              </a>
+
+              <a
+                href="https://teshan.click"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <span>Developer</span>
+                <span>↗</span>
               </a>
             </div>
           </div>

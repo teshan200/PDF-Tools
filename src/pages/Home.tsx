@@ -216,13 +216,13 @@ export default function Home() {
           </div>
 
           {/* Segmented Filter Tabs */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl gap-1 overflow-x-auto text-xs font-medium border border-slate-200/60 dark:border-slate-700/60">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl gap-1 overflow-x-auto max-w-full text-xs font-medium border border-slate-200/60 dark:border-slate-700/60 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
             {CATEGORY_TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedCategory(tab.id)}
                 className={[
-                  'px-3.5 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer',
+                  'px-3.5 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer shrink-0',
                   selectedCategory === tab.id
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',

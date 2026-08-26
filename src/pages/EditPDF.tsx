@@ -971,7 +971,7 @@ export default function EditPDF() {
 
           {/* Contextual Floating Styling Ribbon for Active Tool */}
           {(activeTool === 'text' || (selectedItem && selectedItem.type === 'text')) && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs animate-fadeIn">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs animate-fadeIn transition-colors">
               <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-indigo-500" />
                 Text Style:
@@ -986,7 +986,7 @@ export default function EditPDF() {
                     setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontFamily: f } : a)))
                   }
                 }}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-medium text-slate-800 outline-none"
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 font-medium text-slate-800 dark:text-slate-200 outline-none"
               >
                 <option value="Helvetica">Helvetica / Arial</option>
                 <option value="TimesRoman">Times New Roman</option>
@@ -1003,11 +1003,11 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontSize: newSz } : a)))
                     }
                   }}
-                  className="w-6 h-6 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center font-bold"
+                  className="w-6 h-6 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 flex items-center justify-center font-bold cursor-pointer"
                 >
                   -
                 </button>
-                <span className="w-8 text-center font-semibold text-slate-700">
+                <span className="w-8 text-center font-semibold text-slate-700 dark:text-slate-300">
                   {selectedItem?.type === 'text' ? selectedItem.fontSize : textSize}
                 </span>
                 <button
@@ -1019,7 +1019,7 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, fontSize: newSz } : a)))
                     }
                   }}
-                  className="w-6 h-6 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center font-bold"
+                  className="w-6 h-6 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 flex items-center justify-center font-bold cursor-pointer"
                 >
                   +
                 </button>
@@ -1034,10 +1034,10 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, isBold: isB } : a)))
                     }
                   }}
-                  className={`px-2 py-1 font-bold rounded-lg border ${
+                  className={`px-2 py-1 font-bold rounded-lg border cursor-pointer transition-colors ${
                     (selectedItem?.type === 'text' ? selectedItem.isBold : textBold)
                       ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-slate-50 border-slate-200 text-slate-700'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   B
@@ -1050,10 +1050,10 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, isItalic: isI } : a)))
                     }
                   }}
-                  className={`px-2 py-1 italic font-serif rounded-lg border ${
+                  className={`px-2 py-1 italic font-serif rounded-lg border cursor-pointer transition-colors ${
                     (selectedItem?.type === 'text' ? selectedItem.isItalic : textItalic)
                       ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-slate-50 border-slate-200 text-slate-700'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   I
@@ -1071,10 +1071,10 @@ export default function EditPDF() {
                       }
                     }}
                     style={{ backgroundColor: c }}
-                    className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                    className={`w-5 h-5 rounded-full border-2 transition-transform cursor-pointer ${
                       (selectedItem?.type === 'text' ? selectedItem.color : textColor) === c
                         ? 'border-indigo-600 scale-110 shadow-xs'
-                        : 'border-white'
+                        : 'border-white dark:border-slate-700'
                     }`}
                   />
                 ))}
@@ -1083,7 +1083,7 @@ export default function EditPDF() {
               {selectedItem && (
                 <button
                   onClick={deleteSelected}
-                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg border border-red-200 font-semibold transition-colors text-xs"
+                  className="ml-auto flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800 font-semibold transition-colors text-xs cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1095,9 +1095,9 @@ export default function EditPDF() {
           )}
 
           {(activeTool === 'whiteout' || (selectedItem && selectedItem.type === 'whiteout')) && (
-            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs">
-              <span className="font-bold text-slate-800">Box Style:</span>
-              <div className="flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs transition-colors">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Box Style:</span>
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => {
                     setBoxColor('#ffffff')
@@ -1106,7 +1106,7 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#ffffff', opacity: 1.0 } : a)))
                     }
                   }}
-                  className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg font-medium shadow-2xs hover:bg-slate-50 flex items-center gap-1.5"
+                  className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg font-medium shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5 cursor-pointer"
                 >
                   <div className="w-3 h-3 bg-white border border-slate-400 rounded-xs" />
                   Whiteout (Erase)
@@ -1119,7 +1119,7 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#000000', opacity: 1.0 } : a)))
                     }
                   }}
-                  className="px-2.5 py-1 bg-black text-white rounded-lg font-medium shadow-2xs flex items-center gap-1.5"
+                  className="px-2.5 py-1 bg-black text-white rounded-lg font-medium shadow-2xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <div className="w-3 h-3 bg-black rounded-xs" />
                   Black (Redact)
@@ -1132,7 +1132,7 @@ export default function EditPDF() {
                       setAnnotations((prev) => prev.map((a) => (a.id === selectedId ? { ...a, color: '#fef08a', opacity: 0.45 } : a)))
                     }
                   }}
-                  className="px-2.5 py-1 bg-yellow-100 text-yellow-900 border border-yellow-300 rounded-lg font-medium shadow-2xs flex items-center gap-1.5"
+                  className="px-2.5 py-1 bg-yellow-100 dark:bg-yellow-950/70 text-yellow-900 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-800 rounded-lg font-medium shadow-2xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <div className="w-3 h-3 bg-yellow-400 rounded-xs" />
                   Highlighter
@@ -1142,7 +1142,7 @@ export default function EditPDF() {
               {selectedItem && (
                 <button
                   onClick={deleteSelected}
-                  className="ml-auto flex items-center gap-1 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg border border-red-200 font-semibold transition-colors text-xs"
+                  className="ml-auto flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800 font-semibold transition-colors text-xs cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1154,8 +1154,8 @@ export default function EditPDF() {
           )}
 
           {activeTool === 'draw' && (
-            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs">
-              <span className="font-bold text-slate-800">Pen &amp; Highlighter:</span>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-3.5 py-2 flex items-center gap-3.5 flex-wrap text-xs shadow-xs transition-colors">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Pen &amp; Highlighter:</span>
               <div className="flex items-center gap-2">
                 {[
                   { c: '#000000', o: 1.0 },
@@ -1171,19 +1171,19 @@ export default function EditPDF() {
                       setDrawOpacity(item.o)
                     }}
                     style={{ backgroundColor: item.c }}
-                    className={`w-5 h-5 rounded-full border-2 transition-transform ${drawColor === item.c ? 'border-indigo-600 scale-110 shadow-xs' : 'border-white'}`}
+                    className={`w-5 h-5 rounded-full border-2 transition-transform cursor-pointer ${drawColor === item.c ? 'border-indigo-600 scale-110 shadow-xs' : 'border-white dark:border-slate-700'}`}
                   />
                 ))}
               </div>
 
               <div className="flex items-center gap-1">
-                <span>Thickness:</span>
+                <span className="text-slate-600 dark:text-slate-400">Thickness:</span>
                 {[2, 4, 8, 14].map((w) => (
                   <button
                     key={w}
                     onClick={() => setDrawWidth(w)}
-                    className={`px-2 py-0.5 rounded font-medium border ${
-                      drawWidth === w ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-700'
+                    className={`px-2 py-0.5 rounded font-medium border cursor-pointer transition-colors ${
+                      drawWidth === w ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     {w}px

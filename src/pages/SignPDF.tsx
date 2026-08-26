@@ -1265,15 +1265,15 @@ export default function SignPDF() {
 
       {/* ── Create Signature Modal ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className={`bg-white rounded-3xl w-full p-6 shadow-2xl border border-slate-100 space-y-4 ${modalTab === 'upload' && uploadedImageSrc ? 'max-w-2xl' : 'max-w-lg'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-fadeIn">
+          <div className={`bg-white dark:bg-slate-900 rounded-3xl w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 max-h-[90vh] overflow-y-auto transition-colors ${modalTab === 'upload' && uploadedImageSrc ? 'max-w-2xl' : 'max-w-lg'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-200/60 dark:border-teal-800 text-teal-700 dark:text-teal-400 flex items-center justify-center">
                   <PenIcon className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Create Signature</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Create Signature</h3>
               </div>
               <button
                 onClick={() => {
@@ -1281,18 +1281,18 @@ export default function SignPDF() {
                   setUploadedImageSrc(null)
                   setUploadedImgEl(null)
                 }}
-                className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-sm font-bold"
+                className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+            <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl gap-1 border border-slate-200/60 dark:border-slate-700/60">
               <button
                 onClick={() => setModalTab('draw')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  modalTab === 'draw' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  modalTab === 'draw' ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <PenIcon className="w-3.5 h-3.5" />
@@ -1300,8 +1300,8 @@ export default function SignPDF() {
               </button>
               <button
                 onClick={() => setModalTab('type')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  modalTab === 'type' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  modalTab === 'type' ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <TypeIcon className="w-3.5 h-3.5" />
@@ -1309,8 +1309,8 @@ export default function SignPDF() {
               </button>
               <button
                 onClick={() => setModalTab('upload')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  modalTab === 'upload' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  modalTab === 'upload' ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <CameraIcon className="w-3.5 h-3.5" />
@@ -1321,49 +1321,49 @@ export default function SignPDF() {
             {/* Tab 1: Draw */}
             {modalTab === 'draw' && (
               <div className="space-y-3">
-                <div className="border border-slate-300 rounded-2xl bg-white overflow-hidden relative shadow-inner">
+                <div className="border border-slate-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-950 overflow-hidden relative shadow-inner">
                   <canvas
                     ref={padCanvasRef}
                     width={480}
                     height={180}
-                    className="w-full h-40 cursor-crosshair touch-none"
+                    className="w-full h-40 cursor-crosshair touch-none bg-white"
                     onPointerDown={startPadDrawing}
                     onPointerMove={drawOnPad}
                     onPointerUp={stopPadDrawing}
                     onPointerLeave={stopPadDrawing}
                   />
-                  <div className="absolute bottom-2 left-3 text-[11px] text-slate-400 pointer-events-none">
-                    Sign with mouse, trackpad, or finger
+                  <div className="absolute bottom-2 left-3 text-[11px] text-slate-400 pointer-events-none select-none">
+                    Sign with finger, stylus, or mouse
                   </div>
                   <button
                     onClick={initPad}
-                    className="absolute top-2 right-2 text-xs font-semibold text-slate-500 hover:text-red-500 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
+                    className="absolute top-2 right-2 text-xs font-semibold text-slate-500 hover:text-red-500 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     Clear
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-1">
+                <div className="flex items-center justify-between text-xs pt-1 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-600">Color:</span>
+                    <span className="font-semibold text-slate-600 dark:text-slate-400">Color:</span>
                     {['#000000', '#1e3a8a', '#991b1b'].map((c) => (
                       <button
                         key={c}
                         onClick={() => setDrawColor(c)}
                         style={{ backgroundColor: c }}
-                        className={`w-6 h-6 rounded-full border-2 transition-transform ${drawColor === c ? 'border-teal-500 scale-110' : 'border-white'}`}
+                        className={`w-6 h-6 rounded-full border-2 transition-transform cursor-pointer ${drawColor === c ? 'border-teal-500 scale-110' : 'border-white dark:border-slate-700'}`}
                       />
                     ))}
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-slate-600">Thickness:</span>
+                    <span className="font-semibold text-slate-600 dark:text-slate-400">Thickness:</span>
                     {[2, 3, 5].map((w) => (
                       <button
                         key={w}
                         onClick={() => setDrawWidth(w)}
-                        className={`px-2.5 py-1 rounded-lg border font-bold ${
-                          drawWidth === w ? 'bg-teal-600 text-white border-teal-600' : 'bg-slate-50 border-slate-200 text-slate-700'
+                        className={`px-2.5 py-1 rounded-lg border font-bold transition-colors cursor-pointer ${
+                          drawWidth === w ? 'bg-teal-600 text-white border-teal-600' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         {w === 2 ? 'Fine' : w === 3 ? 'Medium' : 'Bold'}
@@ -1378,19 +1378,19 @@ export default function SignPDF() {
             {modalTab === 'type' && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Your Full Name:</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Your Full Name:</label>
                   <input
                     type="text"
                     value={typedName}
                     onChange={(e) => setTypedName(e.target.value)}
                     placeholder="e.g. John Doe"
-                    className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm transition-colors"
                   />
                 </div>
 
                 {typedName.trim() && (
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-700">Select Signature Style:</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Select Signature Style:</label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { name: 'Elegant Script', font: 'font-serif italic' },
@@ -1401,10 +1401,10 @@ export default function SignPDF() {
                         <button
                           key={idx}
                           onClick={() => setTypedFontIndex(idx)}
-                          className={`p-2.5 rounded-xl border text-center transition-all ${
+                          className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                             typedFontIndex === idx
-                              ? 'border-teal-500 bg-teal-50/50 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300 bg-slate-50'
+                              ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-950/50 shadow-xs'
+                              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-800/60'
                           }`}
                         >
                           <p
@@ -1419,13 +1419,13 @@ export default function SignPDF() {
                     </div>
 
                     <div className="flex items-center gap-2 pt-1 text-xs">
-                      <span className="font-semibold text-slate-600">Color:</span>
+                      <span className="font-semibold text-slate-600 dark:text-slate-400">Color:</span>
                       {['#000000', '#1e3a8a', '#991b1b'].map((c) => (
                         <button
                           key={c}
                           onClick={() => setTypedColor(c)}
                           style={{ backgroundColor: c }}
-                          className={`w-6 h-6 rounded-full border-2 transition-transform ${typedColor === c ? 'border-teal-500 scale-110' : 'border-white'}`}
+                          className={`w-6 h-6 rounded-full border-2 transition-transform cursor-pointer ${typedColor === c ? 'border-teal-500 scale-110' : 'border-white dark:border-slate-700'}`}
                         />
                       ))}
                     </div>
@@ -1440,14 +1440,14 @@ export default function SignPDF() {
                 {!uploadedImageSrc ? (
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-2xl p-8 cursor-pointer transition-colors bg-slate-50 hover:bg-teal-50/30 text-center"
+                    className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-500 rounded-2xl p-8 cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/40 hover:bg-teal-50/30 dark:hover:bg-teal-950/30 text-center"
                   >
-                    <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-2">
+                    <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-2">
                       <CameraIcon className="w-6 h-6" />
                     </div>
-                    <p className="font-bold text-sm text-slate-800">Upload Photo of Signature</p>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                      Supports photos of signatures on paper or receipts. We will crop and erase background shadows.
+                    <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Upload Photo of Signature</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                      Supports photos of signatures on paper. We will crop and erase background shadows.
                     </p>
                   </div>
                 ) : (
@@ -1456,12 +1456,12 @@ export default function SignPDF() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {/* Left: Source Image with Interactive Crop Box */}
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                           <span>1. Drag box over signature:</span>
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="text-[11px] text-teal-600 hover:underline font-semibold"
+                            className="text-[11px] text-teal-600 dark:text-teal-400 hover:underline font-semibold cursor-pointer"
                           >
                             Change Photo
                           </button>
@@ -1469,7 +1469,7 @@ export default function SignPDF() {
 
                         <div
                           ref={cropContainerRef}
-                          className="relative border border-slate-300 rounded-xl overflow-hidden bg-slate-900 select-none flex items-center justify-center"
+                          className="relative border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-900 select-none flex items-center justify-center"
                           style={{ height: '220px' }}
                         >
                           <img
@@ -1478,7 +1478,7 @@ export default function SignPDF() {
                             className="max-h-full max-w-full object-contain pointer-events-none"
                           />
 
-                          {/* Semi-transparent dark overlay around crop */}
+                          {/* Interactive Crop Box Overlay */}
                           <div
                             style={{
                               position: 'absolute',
@@ -1486,107 +1486,110 @@ export default function SignPDF() {
                               top: `${cropBox.y}%`,
                               width: `${cropBox.w}%`,
                               height: `${cropBox.h}%`,
-                              boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.65)',
-                              border: '2px solid #0d9488',
-                              cursor: 'move',
                             }}
-                            onPointerDown={(e) => startCropDrag(e, 'move')}
-                            className="z-10 group"
+                            onPointerDown={handleCropBoxPointerDown}
+                            className="border-2 border-teal-400 bg-teal-500/15 cursor-move shadow-sm group"
                           >
-                            <span className="absolute -top-5 left-1 text-[10px] bg-teal-600 text-white font-bold px-1.5 py-0.5 rounded shadow-xs">
-                              Crop Area
-                            </span>
-
-                            {/* SE Resize Handle */}
+                            {/* Resize Handle at Bottom-Right */}
                             <div
-                              onPointerDown={(e) => startCropDrag(e, 'se')}
-                              className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-white border-2 border-teal-600 rounded-xs cursor-nwse-resize z-20 shadow"
+                              onPointerDown={handleCropHandlePointerDown}
+                              className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-white border-2 border-teal-600 rounded-full cursor-nwse-resize shadow-md"
                             />
-                            {/* NW Resize Handle */}
-                            <div
-                              onPointerDown={(e) => startCropDrag(e, 'nw')}
-                              className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-white border-2 border-teal-600 rounded-xs cursor-nwse-resize z-20 shadow"
-                            />
+                            {/* Visual Center Crosshair Guide */}
+                            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-40">
+                              <div className="border-r border-b border-white/50" />
+                              <div className="border-r border-b border-white/50" />
+                              <div className="border-b border-white/50" />
+                              <div className="border-r border-b border-white/50" />
+                              <div className="border-r border-b border-white/50" />
+                              <div className="border-b border-white/50" />
+                              <div className="border-r border-white/50" />
+                              <div className="border-r border-white/50" />
+                              <div />
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Right: Extracted Live Transparent Preview */}
+                      {/* Right: Real-Time Vector Transparent Ink Preview */}
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                          <span>2. Extracted Signature:</span>
-                          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
-                            Transparent PNG
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                          <span>2. Extracted Vector Stamp:</span>
+                          <span className="text-[10px] text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 px-2 py-0.5 rounded-full">
+                            Transparent Ink
                           </span>
                         </div>
 
-                        {/* Checkerboard Background for Transparency */}
                         <div
-                          className="border border-slate-300 rounded-xl overflow-hidden flex items-center justify-center p-3 relative"
-                          style={{
-                            height: '220px',
-                            backgroundImage: 'linear-gradient(45deg, #f1f5f9 25%, transparent 25%), linear-gradient(-45deg, #f1f5f9 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f1f5f9 75%), linear-gradient(-45deg, transparent 75%, #f1f5f9 75%)',
-                            backgroundSize: '16px 16px',
-                            backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
-                            backgroundColor: '#ffffff',
-                          }}
+                          className="border border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center p-4 bg-[repeating-conic-gradient(#f8fafc_0%_25%,#e2e8f0_0%_50%)] dark:bg-[repeating-conic-gradient(#0f172a_0%_25%,#1e293b_0%_50%)] bg-[length:16px_16px]"
+                          style={{ height: '220px' }}
                         >
                           {extractedPreviewUrl ? (
                             <img
                               src={extractedPreviewUrl}
-                              alt="Extracted Preview"
-                              className="max-h-full max-w-full object-contain drop-shadow-xs"
+                              alt="Extracted Ink Stamp"
+                              className="max-h-full max-w-full object-contain filter drop-shadow-md"
                             />
                           ) : (
-                            <span className="text-xs text-slate-400">Processing...</span>
+                            <p className="text-xs text-slate-400">Processing vector ink…</p>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Extractor Fine-Tuning Controls */}
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
-                      {/* Threshold Slider */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                          <span className="flex items-center gap-1.5">
-                            <SlidersIcon className="w-3.5 h-3.5 text-slate-500" />
-                            Background Cleaning Sensitivity:
-                          </span>
-                          <span className="text-teal-700 font-mono font-bold">{thresholdVal}</span>
+                    {/* Fine-Tuning Controls */}
+                    <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        {/* Threshold Slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
+                            <span>Background Eraser:</span>
+                            <span className="font-mono text-teal-600 dark:text-teal-400">{extractionThreshold}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={80}
+                            max={240}
+                            value={extractionThreshold}
+                            onChange={(e) => setExtractionThreshold(parseInt(e.target.value))}
+                            className="w-full accent-teal-600 cursor-pointer"
+                          />
                         </div>
-                        <input
-                          type="range"
-                          min={60}
-                          max={230}
-                          value={thresholdVal}
-                          onChange={(e) => setThresholdVal(parseInt(e.target.value, 10))}
-                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
-                        />
-                        <div className="flex justify-between text-[10px] text-slate-400">
-                          <span>Keep lighter strokes</span>
-                          <span>Erase faint shadows &amp; paper</span>
+
+                        {/* Contrast Slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
+                            <span>Ink Sharpness:</span>
+                            <span className="font-mono text-teal-600 dark:text-teal-400">{extractionContrast}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={20}
+                            max={200}
+                            value={extractionContrast}
+                            onChange={(e) => setExtractionContrast(parseInt(e.target.value))}
+                            className="w-full accent-teal-600 cursor-pointer"
+                          />
                         </div>
                       </div>
 
-                      {/* Ink Color Palette */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
-                        <span className="font-semibold text-slate-700">Ink Color:</span>
+                      {/* Ink Color Selector */}
+                      <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/70 dark:border-slate-700/70 flex-wrap gap-2">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Ink Color:</span>
                         <div className="flex items-center gap-1.5">
                           {[
-                            { id: 'black' as InkColorMode, label: 'Enhanced Black', bg: '#0f172a' },
-                            { id: 'navy' as InkColorMode, label: 'Navy Blue', bg: '#1e3a8a' },
-                            { id: 'red' as InkColorMode, label: 'Dark Red', bg: '#991b1b' },
+                            { id: 'black' as InkColorMode, label: 'Black Ink', bg: '#0f172a' },
+                            { id: 'blue' as InkColorMode, label: 'Blue Ink', bg: '#1d4ed8' },
                             { id: 'original' as InkColorMode, label: 'Original', bg: '#64748b' },
                           ].map((item) => (
                             <button
                               key={item.id}
                               type="button"
                               onClick={() => setInkColorChoice(item.id)}
-                              className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1 ${
+                              className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
                                 inkColorChoice === item.id
-                                  ? 'bg-white border-teal-500 text-teal-700 shadow-xs'
-                                  : 'border-slate-200 text-slate-600 bg-slate-100 hover:bg-slate-200'
+                                  ? 'bg-white dark:bg-slate-900 border-teal-500 text-teal-700 dark:text-teal-400 shadow-xs'
+                                  : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
                               }`}
                             >
                               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.bg }} />
@@ -1609,41 +1612,41 @@ export default function SignPDF() {
             )}
 
             {/* ── Security & AES-256 Encryption Options ── */}
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2.5">
-              <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-800 select-none">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs space-y-2.5">
+              <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-800 dark:text-slate-200 select-none">
                 <input
                   type="checkbox"
                   checked={saveToDevice}
                   onChange={(e) => setSaveToDevice(e.target.checked)}
-                  className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                  className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer"
                 />
                 <span>Save signature securely on this device (AES-256 Encrypted)</span>
               </label>
 
               {saveToDevice && (
-                <div className="pl-6 space-y-2 pt-1 border-t border-slate-200/60">
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                <div className="pl-6 space-y-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300 select-none">
                     <input
                       type="checkbox"
                       checked={usePinLock}
                       onChange={(e) => setUsePinLock(e.target.checked)}
-                      className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                      className="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer"
                     />
-                    <LockIcon className="w-3.5 h-3.5 text-slate-500" />
+                    <LockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                     <span className="font-medium">Protect signature with a PIN code (Optional)</span>
                   </label>
 
                   {usePinLock && (
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
                       <input
                         type="password"
                         value={creationPin}
                         onChange={(e) => setCreationPin(e.target.value)}
                         placeholder="Enter 4-digit PIN"
                         maxLength={8}
-                        className="w-40 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono tracking-widest text-xs focus:ring-2 focus:ring-teal-500 outline-none"
+                        className="w-40 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono tracking-widest text-xs focus:ring-2 focus:ring-teal-500 outline-none"
                       />
-                      <span className="text-[11px] text-slate-500">Required to unlock on this device</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Required to unlock on this device</span>
                     </div>
                   )}
                 </div>
@@ -1660,7 +1663,7 @@ export default function SignPDF() {
                     }
                   }}
                   disabled={!extractedPreviewUrl}
-                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 text-sm transition-colors"
+                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 dark:shadow-none text-sm transition-colors cursor-pointer"
                 >
                   Insert Extracted Signature
                 </button>
@@ -1669,7 +1672,7 @@ export default function SignPDF() {
               <button
                 onClick={modalTab === 'draw' ? handleSaveDrawnSignature : handleSaveTypedSignature}
                 disabled={modalTab === 'type' && !typedName.trim()}
-                className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 text-sm transition-colors"
+                className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-teal-100 dark:shadow-none text-sm transition-colors cursor-pointer"
               >
                 Insert Signature
               </button>
@@ -1680,14 +1683,14 @@ export default function SignPDF() {
 
       {/* ── Unlock PIN Modal with Brute-Force Protection ── */}
       {unlockTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800 text-amber-800 dark:text-amber-400 flex items-center justify-center">
                   <LockIcon className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Unlock Signature</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Unlock Signature</h3>
               </div>
               <button
                 onClick={() => {
@@ -1695,13 +1698,13 @@ export default function SignPDF() {
                   setUnlockPin('')
                   setUnlockError(null)
                 }}
-                className="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-xs font-bold"
+                className="w-7 h-7 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               This signature is encrypted with AES-256. Enter your PIN to decrypt and place it on your document.
             </p>
 
@@ -1717,18 +1720,18 @@ export default function SignPDF() {
                 placeholder="Enter PIN code"
                 autoFocus
                 maxLength={8}
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-center font-mono text-lg tracking-widest text-slate-900 focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:bg-slate-100 outline-none"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center font-mono text-lg tracking-widest text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 disabled:opacity-50 disabled:bg-slate-100 outline-none transition-colors"
               />
 
               {cooldownRemaining > 0 ? (
-                <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-center space-y-1">
-                  <p className="text-xs font-bold text-red-700">⏳ Cooldown Active</p>
-                  <p className="text-[11px] text-red-600">
+                <div className="p-2.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-center space-y-1">
+                  <p className="text-xs font-bold text-red-700 dark:text-red-400">⏳ Cooldown Active</p>
+                  <p className="text-[11px] text-red-600 dark:text-red-300">
                     Security lock: Please wait <span className="font-bold">{cooldownRemaining}s</span> before retrying.
                   </p>
                 </div>
               ) : unlockError ? (
-                <p className="text-xs text-red-600 font-semibold text-center">{unlockError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400 font-semibold text-center">{unlockError}</p>
               ) : null}
 
               <div className="flex gap-2 pt-1">
