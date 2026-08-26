@@ -18,39 +18,27 @@ export default function Contact() {
     setIsSubmitting(true)
     setError(null)
 
-    const payload = JSON.stringify({ name, email, message })
+    const formData = new URLSearchParams()
+    formData.append('form-name', 'contact')
+    formData.append('bot-field', '')
+    formData.append('name', name)
+    formData.append('email', email)
+    formData.append('message', message)
 
     try {
-      // 1. Try /.netlify/functions/contact directly
-      let res = await fetch('/.netlify/functions/contact', {
+      // 1. Primary: Submit directly to Netlify Forms endpoint
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString(),
+      })
+
+      // 2. Backup: Log submission via serverless function
+      fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: payload,
+        body: JSON.stringify({ name, email, message }),
       }).catch(() => null)
-
-      // 2. If not ok, try /api/contact redirect
-      if (!res || !res.ok) {
-        res = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-        }).catch(() => null)
-      }
-
-      // 3. Fallback to Netlify Forms URL-encoded submission
-      if (!res || !res.ok) {
-        const formData = new URLSearchParams()
-        formData.append('form-name', 'contact')
-        formData.append('name', name)
-        formData.append('email', email)
-        formData.append('message', message)
-
-        await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
-        }).catch(() => null)
-      }
 
       setSubmitted(true)
     } catch {
@@ -96,10 +84,12 @@ export default function Contact() {
             name="contact"
             method="POST"
             data-netlify="true"
+            netlify-honeypot="bot-field"
             onSubmit={handleSubmit}
             className="space-y-4"
           >
             <input type="hidden" name="form-name" value="contact" />
+            <input type="hidden" name="bot-field" value="" />
 
             {error && (
               <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-xs">
