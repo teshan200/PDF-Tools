@@ -18,35 +18,42 @@ export default function Contact() {
     setIsSubmitting(true)
     setError(null)
 
+    const payload = JSON.stringify({ name, email, message })
+
     try {
-      // 1. Submit to serverless function endpoint /api/contact
-      const res = await fetch('/api/contact', {
+      // 1. Try /.netlify/functions/contact directly
+      let res = await fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message }),
-      })
+        body: payload,
+      }).catch(() => null)
 
-      if (res.ok) {
-        setSubmitted(true)
-        return
+      // 2. If not ok, try /api/contact redirect
+      if (!res || !res.ok) {
+        res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+        }).catch(() => null)
       }
 
-      // 2. Fallback for static Netlify Forms
-      const formData = new URLSearchParams()
-      formData.append('form-name', 'contact')
-      formData.append('name', name)
-      formData.append('email', email)
-      formData.append('message', message)
+      // 3. Fallback to Netlify Forms URL-encoded submission
+      if (!res || !res.ok) {
+        const formData = new URLSearchParams()
+        formData.append('form-name', 'contact')
+        formData.append('name', name)
+        formData.append('email', email)
+        formData.append('message', message)
 
-      await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData.toString(),
-      })
+        await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        }).catch(() => null)
+      }
 
       setSubmitted(true)
-    } catch (err) {
-      console.info('Contact form submitted:', err)
+    } catch {
       setSubmitted(true)
     } finally {
       setIsSubmitting(false)
