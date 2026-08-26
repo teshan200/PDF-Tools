@@ -314,10 +314,37 @@ export default function SignPDF() {
     }
   }, [pdfDoc, currentPage, scale])
 
+  // Auto-fit to mobile container width on initial load and page dimension changes
+  useEffect(() => {
+    if (!containerRef.current || !pageDimensions.width) return
+    const isMobile = window.innerWidth < 640
+    const containerWidth = containerRef.current.clientWidth - (isMobile ? 20 : 64)
+    if (containerWidth > 0 && pageDimensions.width > 0) {
+      const targetScale = Math.min(1.2, Math.max(0.3, containerWidth / pageDimensions.width))
+      setScale(parseFloat(targetScale.toFixed(2)))
+    }
+  }, [pageDimensions.width])
+
+  // Auto-fit on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (!containerRef.current || !pageDimensions.width) return
+      const isMobile = window.innerWidth < 640
+      const containerWidth = containerRef.current.clientWidth - (isMobile ? 20 : 64)
+      if (containerWidth > 0 && pageDimensions.width > 0) {
+        const targetScale = Math.min(1.2, Math.max(0.3, containerWidth / pageDimensions.width))
+        setScale(parseFloat(targetScale.toFixed(2)))
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [pageDimensions.width])
+
   const fitToWidth = useCallback(() => {
     if (!containerRef.current || !pageDimensions.width) return
-    const containerWidth = containerRef.current.clientWidth - 64
-    const targetScale = Math.min(1.4, Math.max(0.4, (containerWidth / pageDimensions.width)))
+    const isMobile = window.innerWidth < 640
+    const containerWidth = containerRef.current.clientWidth - (isMobile ? 20 : 64)
+    const targetScale = Math.min(1.4, Math.max(0.3, (containerWidth / pageDimensions.width)))
     setScale(parseFloat(targetScale.toFixed(2)))
   }, [pageDimensions.width])
 
@@ -1195,18 +1222,18 @@ export default function SignPDF() {
 
           {/* Document Canvas Workspace */}
           <div
-            className="flex justify-center overflow-auto p-4 sm:p-8 bg-slate-100 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[550px] shadow-inner"
+            className="flex justify-center overflow-auto p-2 sm:p-8 bg-slate-100 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[350px] sm:min-h-[550px] shadow-inner touch-pan-x touch-pan-y"
             onClick={() => setSelectedId(null)}
           >
             <div
-              className="relative bg-white shadow-xl rounded-sm select-none transition-transform"
+              className="relative bg-white shadow-xl rounded-sm select-none transition-transform shrink-0"
               style={{
                 width: `${pageDimensions.width * scale}px`,
                 height: `${pageDimensions.height * scale}px`,
               }}
             >
               {/* PDF Page Canvas */}
-              <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block pointer-events-none" />
+              <canvas ref={canvasRef} className="block pointer-events-none w-full h-full bg-white" />
 
               {/* Placed Signatures & Stamps on current page */}
               {placedItems
