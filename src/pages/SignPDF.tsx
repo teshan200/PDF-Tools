@@ -727,7 +727,10 @@ export default function SignPDF() {
   // ─── 10. Drag & Resize Placed Items ─────────────────────────────────────────
   const startDrag = (id: string, e: React.PointerEvent, isResize = false) => {
     e.stopPropagation()
-    e.currentTarget.setPointerCapture(e.pointerId)
+    e.preventDefault()
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {}
     setSelectedId(id)
 
     const item = placedItems.find((a) => a.id === id)
@@ -746,20 +749,26 @@ export default function SignPDF() {
 
     const onMove = (ev: PointerEvent) => {
       if (!dragRef.current || dragRef.current.id !== id) return
-      const dx = (ev.clientX - dragRef.current.startX) / scale
-      const dy = (ev.clientY - dragRef.current.startY) / scale
+      if (typeof ev.clientX !== 'number' || typeof ev.clientY !== 'number') return
+      const currentScale = Math.max(0.1, scale || 1)
+      const dx = (ev.clientX - dragRef.current.startX) / currentScale
+      const dy = (ev.clientY - dragRef.current.startY) / currentScale
 
       setPlacedItems((prev) =>
         prev.map((it) => {
           if (it.id !== id) return it
           if (dragRef.current?.isResize) {
             const newW = Math.max(30, Math.round(dragRef.current.origW + dx))
-            const ratio = dragRef.current.origW / dragRef.current.origH
-            const newH = Math.max(15, Math.round(newW / ratio))
-            return { ...it, width: newW, height: newH }
+            const ratio = (dragRef.current.origW || 150) / (dragRef.current.origH || 60)
+            const newH = Math.max(15, Math.round(newW / (ratio || 2.5)))
+            return { ...it, width: isNaN(newW) ? it.width : newW, height: isNaN(newH) ? it.height : newH }
           } else {
-            const newX = Math.max(0, Math.round(dragRef.current.origX + dx))
-            const newY = Math.max(0, Math.round(dragRef.current.origY + dy))
+            const maxX = Math.max(0, (pageDimensions.width || 800) - (it.width || 100))
+            const maxY = Math.max(0, (pageDimensions.height || 1000) - (it.height || 40))
+            const rawX = Math.round(dragRef.current.origX + dx)
+            const rawY = Math.round(dragRef.current.origY + dy)
+            const newX = isNaN(rawX) ? it.x : Math.max(0, Math.min(maxX, rawX))
+            const newY = isNaN(rawY) ? it.y : Math.max(0, Math.min(maxY, rawY))
             return { ...it, x: newX, y: newY }
           }
         })
@@ -772,8 +781,8 @@ export default function SignPDF() {
       window.removeEventListener('pointerup', onUp)
     }
 
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('pointerup', onUp, { passive: true })
   }
 
   const deletePlacedItem = (id: string) => {
@@ -1240,20 +1249,26 @@ export default function SignPDF() {
                 .filter((item) => item.page === currentPage)
                 .map((item) => {
                   const isSelected = selectedId === item.id
+                  const itemX = Math.max(0, (item.x || 0) * scale)
+                  const itemY = Math.max(0, (item.y || 0) * scale)
+                  const itemW = Math.max(20, (item.width || 150) * scale)
+                  const itemH = Math.max(10, (item.height || 60) * scale)
+
                   return (
                     <div
                       key={item.id}
                       onPointerDown={(e) => startDrag(item.id, e, false)}
-                      className={`absolute cursor-move select-none group transition-shadow ${
+                      className={`absolute cursor-move select-none group transition-shadow touch-none ${
                         isSelected
                           ? 'ring-2 ring-teal-500 bg-teal-500/5 shadow-md'
                           : 'hover:ring-1 hover:ring-teal-400'
                       }`}
                       style={{
-                        left: `${item.x * scale}px`,
-                        top: `${item.y * scale}px`,
-                        width: `${item.width * scale}px`,
-                        height: `${item.height * scale}px`,
+                        left: `${itemX}px`,
+                        top: `${itemY}px`,
+                        width: `${itemW}px`,
+                        height: `${itemH}px`,
+                        touchAction: 'none',
                       }}
                     >
                       <img
