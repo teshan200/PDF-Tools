@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { trackPageView } from './analytics'
+import { updateSEOForRoute } from './utils/seo'
 
 interface RouterContextType {
   path: string
@@ -27,8 +28,9 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('hashchange', handler)
   }, [])
 
-  // Send page_view event to Google Analytics on route/tool changes
+  // Update dynamic SEO metadata and send page_view event to Google Analytics
   useEffect(() => {
+    updateSEOForRoute(path)
     const timer = setTimeout(() => {
       trackPageView(path, document.title)
     }, 100)

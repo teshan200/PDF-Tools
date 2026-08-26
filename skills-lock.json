@@ -19,6 +19,12 @@
       "skillPath": "skills/netlify-functions/SKILL.md",
       "computedHash": "0af59a0afdaa59b7a377204e792bb6ec512112940ce1071bed77c9341fed25f3"
     },
+    "seo": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "skillPath": "skills/seo/SKILL.md",
+      "computedHash": "aa081d7ee9f44d1b09ac521051630adac2fca0e595e3d0d0ec881d0b2644676f"
+    },
     "tailwind-4-docs": {
       "source": "lombiq/tailwind-agent-skills",
       "sourceType": "github",

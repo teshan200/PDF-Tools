@@ -1,4 +1,9 @@
+# Easy PDF Tools (https://easypdftools.xyz/)
 User-agent: *
 Allow: /
 
+# Prevent crawling of backend API handlers
+Disallow: /api/
+
+# XML Sitemap Location for Search Engine Crawlers
 Sitemap: https://easypdftools.xyz/sitemap.xml

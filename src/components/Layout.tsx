@@ -302,11 +302,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="space-y-2.5">
               <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">PDF Tools</h4>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
-                <li><button onClick={() => navigate('/edit')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Edit PDF</button></li>
-                <li><button onClick={() => navigate('/sign')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Sign PDF</button></li>
-                <li><button onClick={() => navigate('/merge')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Merge PDF</button></li>
-                <li><button onClick={() => navigate('/split')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Split PDF</button></li>
-                <li><button onClick={() => navigate('/compress')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Compress PDF</button></li>
+                <li><a href="#/edit" onClick={(e) => { e.preventDefault(); navigate('/edit') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Edit PDF</a></li>
+                <li><a href="#/sign" onClick={(e) => { e.preventDefault(); navigate('/sign') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Sign PDF</a></li>
+                <li><a href="#/merge" onClick={(e) => { e.preventDefault(); navigate('/merge') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Merge PDF</a></li>
+                <li><a href="#/split" onClick={(e) => { e.preventDefault(); navigate('/split') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Split PDF</a></li>
+                <li><a href="#/compress" onClick={(e) => { e.preventDefault(); navigate('/compress') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Compress PDF</a></li>
               </ul>
             </div>
 
@@ -314,11 +314,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="space-y-2.5">
               <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Convert &amp; Security</h4>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
-                <li><button onClick={() => navigate('/jpg')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to JPG</button></li>
-                <li><button onClick={() => navigate('/word')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to Word</button></li>
-                <li><button onClick={() => navigate('/rotate')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Rotate PDF</button></li>
-                <li><button onClick={() => navigate('/protect')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Protect PDF</button></li>
-                <li><button onClick={() => navigate('/unlock')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Unlock PDF</button></li>
+                <li><a href="#/jpg" onClick={(e) => { e.preventDefault(); navigate('/jpg') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to JPG</a></li>
+                <li><a href="#/word" onClick={(e) => { e.preventDefault(); navigate('/word') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">PDF to Word</a></li>
+                <li><a href="#/rotate" onClick={(e) => { e.preventDefault(); navigate('/rotate') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Rotate PDF</a></li>
+                <li><a href="#/protect" onClick={(e) => { e.preventDefault(); navigate('/protect') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Protect PDF</a></li>
+                <li><a href="#/unlock" onClick={(e) => { e.preventDefault(); navigate('/unlock') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Unlock PDF</a></li>
               </ul>
             </div>
 
@@ -326,10 +326,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="space-y-2.5">
               <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Company &amp; Legal</h4>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400">
-                <li><button onClick={() => navigate('/about')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">About Us</button></li>
-                <li><button onClick={() => navigate('/privacy')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Privacy Policy</button></li>
-                <li><button onClick={() => navigate('/terms')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Terms of Service</button></li>
-                <li><button onClick={() => navigate('/contact')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Contact Us</button></li>
+                <li><a href="#/about" onClick={(e) => { e.preventDefault(); navigate('/about') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">About Us</a></li>
+                <li><a href="#/privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Privacy Policy</a></li>
+                <li><a href="#/terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Terms of Service</a></li>
+                <li><a href="#/contact" onClick={(e) => { e.preventDefault(); navigate('/contact') }} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">Contact Us</a></li>
               </ul>
             </div>
           </div>

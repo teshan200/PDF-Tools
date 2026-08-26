@@ -133,13 +133,32 @@ const CATEGORY_TABS = [
   { id: 'security', label: 'Security' },
 ]
 
+const FAQS = [
+  {
+    q: 'Is Easy PDF Tools completely free to use?',
+    a: 'Yes, Easy PDF Tools is 100% free for everyone. There are no file size limits, no daily document caps, and no registration or credit card required.',
+  },
+  {
+    q: 'Are my PDF documents uploaded to remote servers?',
+    a: 'Core tools (Sign PDF, Edit PDF, Merge, Split, Rotate, PDF to JPG) run 100% locally inside your web browser memory with 0 bytes uploaded over the internet. Conversion tools process files in ephemeral, encrypted RAM and permanently delete them immediately after completion.',
+  },
+  {
+    q: 'Can I edit existing text in a PDF document?',
+    a: 'Yes! The Edit PDF tool allows you to click on existing paragraphs in your PDF and edit or replace text directly in your browser without altering the document format.',
+  },
+  {
+    q: 'How does digital signature extraction work?',
+    a: 'Upload a smartphone photo of your signature written on paper. Our vector engine automatically erases the paper background, removes shadows, and converts your signature into a crisp, transparent digital ink stamp.',
+  },
+  {
+    q: 'Are saved signatures encrypted on my device?',
+    a: 'Yes. If you choose to save a signature, it is encrypted locally on your device using 256-bit AES-GCM encryption with optional PIN-lock protection. We have zero access to your saved signatures or keys.',
+  },
+]
+
 export default function Home() {
   const { navigate } = useRouter()
   const [selectedCategory, setSelectedCategory] = useState('all')
-
-  useEffect(() => {
-    document.title = 'Easy PDF Tools — Free Online PDF Editor, Converter & Utilities | easypdftools.xyz'
-  }, [])
 
   const filteredTools = useMemo(() => {
     if (selectedCategory === 'all') return TOOLS
@@ -160,7 +179,7 @@ export default function Home() {
             <span>100% Client-Side Privacy • Zero File Caps</span>
           </div>
 
-          {/* Headline */}
+          {/* Primary H1 Heading for SEO */}
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
             Professional PDF Tools for Everyone
           </h1>
@@ -254,6 +273,30 @@ export default function Home() {
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Full transparency on GitHub for independent code auditing by developers and privacy-focused professionals worldwide.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Semantic SEO FAQ Section ─────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xs space-y-6">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Frequently Asked Questions</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Everything you need to know about Easy PDF Tools security, privacy, and features.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {FAQS.map((faq, index) => (
+              <div key={index} className="space-y-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-start gap-2">
+                  <span className="text-blue-600 dark:text-blue-400 font-mono text-xs mt-0.5">Q.</span>
+                  <span>{faq.q}</span>
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-5">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
